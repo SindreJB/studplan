@@ -4,6 +4,7 @@
     "types": ["node", "vite/client"],
     "allowImportingTsExtensions": true,
     "paths": {
+      "#/*": ["./src/*"],
       // for shadcn CLI
       "@repo/ui/*": ["../../packages/ui/*"]
     }

@@ -9,14 +9,15 @@
   },
   "scripts": {
     "db": "drizzle-kit",
-    "auth:generate": "vpx auth@rc generate --config ../auth/src/auth.ts --y --output ./src/schema/auth.schema.ts"
+    "auth:generate": "vpx auth@rc generate --config ../auth/src/auth.ts --y --output ./src/schema/auth.schema.ts",
+    "generate": "drizzle-kit generate"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
-    "nanoid": "catalog:",
-    "postgres": "catalog:"
+    "nanoid": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@repo/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",

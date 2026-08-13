@@ -1,6 +1,7 @@
 import { Button } from "@repo/ui/components/button";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
+import { AddPasskeyButton } from "#/components/add-passkey-button.tsx";
 import { SignOutButton } from "#/components/sign-out-button.tsx";
 import { ThemeToggle } from "#/components/theme-toggle.tsx";
 
@@ -33,7 +34,10 @@ function AppLayout() {
             vpr ui add sidebar
           </span>
         </div>
-        <SignOutButton />
+        <div className="flex gap-2">
+          <AddPasskeyButton />
+          <SignOutButton />
+        </div>
       </div>
     </div>
   );

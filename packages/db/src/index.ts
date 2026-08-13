@@ -1,14 +1,13 @@
 import "@tanstack/react-start/server-only";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { env } from "cloudflare:workers";
+import { drizzle } from "drizzle-orm/d1";
 
 import { authRelations } from "./schema/auth.schema";
 import { relations } from "./schema/relations";
 
-const client = postgres(process.env.DATABASE_URL as string);
+const bindings = env as { DB: D1Database };
 
-export const db = drizzle({
-  client,
+export const db = drizzle(bindings.DB, {
   // authRelations uses defineRelationsPart,
   // so it must come after the main relations.
   // https://orm.drizzle.team/docs/relations-v2#relations-parts

@@ -8,9 +8,10 @@
   "scripts": {
     "dev": "vp dev",
     "preview": "vp preview",
-    "start": "node --env-file-if-exists=.env .output/server/index.mjs",
-    "start:e2e": "node --env-file-if-exists=.env.e2e .output/server/index.mjs",
-    "test:e2e": "playwright test --pass-with-no-tests",
+    "deploy": "vp run build && wrangler d1 migrations apply studplan --remote --config ../../wrangler.jsonc && wrangler secret bulk ../../.env.prod --config ../../wrangler.jsonc && wrangler deploy --config ../../wrangler.jsonc",
+    "db:migrate:local": "wrangler d1 migrations apply studplan --local --persist-to .wrangler/state --config ../../wrangler.jsonc",
+    "db:migrate:remote": "wrangler d1 migrations apply studplan --remote --config ../../wrangler.jsonc",
+    "cf-typegen": "wrangler types --config ../../wrangler.jsonc",
     "ui": "vpx shadcn@latest"
   },
   "dependencies": {
@@ -35,7 +36,7 @@
   },
   "devDependencies": {
     "@babel/core": "catalog:",
-    "@playwright/test": "catalog:",
+    "@cloudflare/vite-plugin": "catalog:",
     "@repo/tsconfig": "workspace:*",
     "@rolldown/plugin-babel": "catalog:",
     "@tailwindcss/vite": "catalog:",
@@ -52,9 +53,9 @@
     "@vitejs/plugin-react": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
     "cross-env": "catalog:",
-    "nitro": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "wrangler": "catalog:"
   }
 }

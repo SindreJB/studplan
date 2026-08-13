@@ -8,9 +8,11 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
+    "@better-auth/passkey": "catalog:",
     "better-auth": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@repo/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:"

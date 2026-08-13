@@ -4,6 +4,9 @@ packages:
   - tools/*
 allowBuilds:
   esbuild: true
+  msgpackr-extract: true
+  sharp: true
+  workerd: true
 
 # https://pnpm.io/settings#minimumreleaseage
 # https://pnpm.io/supply-chain-security#delay-dependency-updates
@@ -18,7 +21,6 @@ catalog:
   "@better-auth/drizzle-adapter": 1.7.0-rc.5
   "@fontsource-variable/inter": 5.3.0
   "@icons-pack/react-simple-icons": 13.13.0
-  "@playwright/test": 1.62.1
   "@rolldown/plugin-babel": 0.2.3
   "@tailwindcss/vite": 4.3.3
   "@tanstack/devtools-a11y": 0.2.0
@@ -61,6 +63,10 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.9
   vite-plus: 0.2.9
   zod: 4.4.3
+  "@cloudflare/workers-types": 5.20260811.1
+  "@better-auth/passkey": 1.7.0-rc.5
+  "@cloudflare/vite-plugin": 1.51.3
+  wrangler: 4.121.0
 
 catalogMode: prefer
 

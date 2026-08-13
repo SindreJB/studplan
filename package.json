@@ -5,12 +5,11 @@
   "scripts": {
     "build": "vp run --recursive build",
     "build:web": "vp run web#build",
-    "dev": "vp run --recursive --parallel dev",
-    "dev:web": "vp run --filter=@repo/web dev",
+    "dev": "vp dev",
+    "dev:web": "vp -C apps/web dev",
     "lint": "vp lint --type-aware --type-check",
     "lint:fix": "vp lint --type-aware --type-check --fix",
     "test": "vp test",
-    "test:e2e": "vp run --recursive test:e2e",
     "format": "vp fmt",
     "format:check": "vp fmt --check",
     "check": "vp check",
@@ -24,13 +23,19 @@
     "ui:web": "vp run --filter=@repo/web ui",
     "auth:secret": "vpx auth@latest secret",
     "auth:generate": "vp run --filter=@repo/db auth:generate",
+    "db:generate": "vp run --filter=@repo/db generate",
+    "db:migrate:local": "vp run --filter=@repo/web db:migrate:local",
+    "db:migrate:remote": "vp run --filter=@repo/web db:migrate:remote",
+    "deploy": "vp run --filter=@repo/web deploy",
+    "cf-typegen": "vp run --filter=@repo/web cf-typegen",
     "skills": "vpx skills@latest",
     "intent": "vpx @tanstack/intent@latest"
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "catalog:",
     "@tanstack/eslint-plugin-router": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "wrangler": "catalog:"
   },
   "engines": {
     "node": ">=24"
