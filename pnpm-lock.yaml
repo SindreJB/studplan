@@ -96,6 +96,9 @@ catalogs:
     better-auth:
       specifier: 1.7.0-rc.5
       version: 1.7.0-rc.5
+    better-result:
+      specifier: 3.0.1
+      version: 3.0.1
     class-variance-authority:
       specifier: 0.7.1
       version: 0.7.1
@@ -203,6 +206,9 @@ importers:
       '@tanstack/react-start':
         specifier: 'catalog:'
         version: 1.168.44(@voidzero-dev/vite-plus-core@0.2.9(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(typescript@7.0.2)(yaml@2.9.0))(crossws@0.4.10(srvx@0.12.5))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.4)(supports-color@10.2.2)
+      better-result:
+        specifier: 'catalog:'
+        version: 3.0.1
       date-fns:
         specifier: 'catalog:'
         version: 4.4.0
@@ -3339,6 +3345,9 @@ packages:
     peerDependenciesMeta:
       zod:
         optional: true
+
+  better-result@3.0.1:
+    resolution: {integrity: sha512-rnCeqEXkKPHmz5MO5ZroPRDyHe4YvlNPyy7qj8cVcWs/GnvSvC3086G74/220W+wWcIWlXgzvcjskFV0A4blUQ==}
 
   blake3-wasm@2.1.5:
     resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
@@ -8086,6 +8095,8 @@ snapshots:
       set-cookie-parser: 3.1.2
     optionalDependencies:
       zod: 4.4.3
+
+  better-result@3.0.1: {}
 
   blake3-wasm@2.1.5: {}
 

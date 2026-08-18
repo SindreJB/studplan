@@ -17,6 +17,7 @@ import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as GuestSignupRouteImport } from './routes/_guest/signup'
 import { Route as AuthAppIndexRouteImport } from './routes/_auth/app/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as CalendarsCalendarIdChar123feedChar125DoticsRouteImport } from './routes/calendars/$calendarId/{$feed}[.]ics'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -56,6 +57,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalendarsCalendarIdChar123feedChar125DoticsRoute =
+  CalendarsCalendarIdChar123feedChar125DoticsRouteImport.update({
+    id: '/calendars/$calendarId/{$feed}.ics',
+    path: '/calendars/$calendarId/{$feed}.ics',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/calendars/$calendarId/{$feed}.ics': typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
   '/app/': typeof AuthAppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/calendars/$calendarId/{$feed}.ics': typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
   '/app': typeof AuthAppIndexRoute
 }
 export interface FileRoutesById {
@@ -81,13 +90,27 @@ export interface FileRoutesById {
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/signup': typeof GuestSignupRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/calendars/$calendarId/{$feed}.ics': typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
   '/_auth/app/': typeof AuthAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/login' | '/signup' | '/api/auth/$' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/signup'
+    | '/api/auth/$'
+    | '/calendars/$calendarId/{$feed}.ics'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/api/auth/$' | '/app'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/api/auth/$'
+    | '/calendars/$calendarId/{$feed}.ics'
+    | '/app'
   id:
     | '__root__'
     | '/'
@@ -97,6 +120,7 @@ export interface FileRouteTypes {
     | '/_guest/login'
     | '/_guest/signup'
     | '/api/auth/$'
+    | '/calendars/$calendarId/{$feed}.ics'
     | '/_auth/app/'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +129,7 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   GuestRouteRoute: typeof GuestRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  CalendarsCalendarIdChar123feedChar125DoticsRoute: typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calendars/$calendarId/{$feed}.ics': {
+      id: '/calendars/$calendarId/{$feed}.ics'
+      path: '/calendars/$calendarId/{$feed}.ics'
+      fullPath: '/calendars/$calendarId/{$feed}.ics'
+      preLoaderRoute: typeof CalendarsCalendarIdChar123feedChar125DoticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -211,6 +243,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   GuestRouteRoute: GuestRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  CalendarsCalendarIdChar123feedChar125DoticsRoute:
+    CalendarsCalendarIdChar123feedChar125DoticsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
