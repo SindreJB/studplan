@@ -7,21 +7,33 @@ import { includeCourseEvent } from "./course-event-filter.ts";
 import { CourseSyncError } from "./course-sync.server.ts";
 import { createIcal } from "./ical.ts";
 
-const { calendar, calendarCourse, calendarEvent, courseCatalog, courseEvent, courseSchedule } =
-  schema;
+const { calendarCourse, calendarEvent, courseEvent } = schema;
 
 export type CalendarFeed = "unfiltered" | "filtered" | { courseId: string };
 
 export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
   return Result.gen(async function* () {
-    const [selectedCalendar] = yield* Result.await(
+    const selectedCalendar = yield* Result.await(
       Result.tryPromise({
         try: () =>
-          db
-            .select({ name: calendar.name })
-            .from(calendar)
-            .where(eq(calendar.id, calendarId))
-            .limit(1),
+          db.query.calendar.findFirst({
+            where: { id: calendarId },
+            columns: { name: true },
+            with: {
+              courses: {
+                columns: {
+                  semester: true,
+                  courseId: true,
+                  term: true,
+                  excludedSourceIds: true,
+                },
+                with: {
+                  catalog: { columns: { courses: true } },
+                  schedule: { columns: { events: true } },
+                },
+              },
+            },
+          }),
         catch: (cause) =>
           new CourseSyncError({
             operation: "read",
@@ -32,38 +44,10 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
     );
     if (!selectedCalendar) return Result.ok(null);
 
-    const rows = yield* Result.await(
-      Result.tryPromise({
-        try: () =>
-          db
-            .select({
-              semester: calendarCourse.semester,
-              courseId: calendarCourse.courseId,
-              term: calendarCourse.term,
-              excludedSourceIds: calendarCourse.excludedSourceIds,
-              events: courseSchedule.events,
-              catalog: courseCatalog.courses,
-            })
-            .from(calendarCourse)
-            .innerJoin(calendar, eq(calendar.id, calendarCourse.calendarId))
-            .innerJoin(
-              courseSchedule,
-              and(
-                eq(courseSchedule.semester, calendarCourse.semester),
-                eq(courseSchedule.courseId, calendarCourse.courseId),
-                eq(courseSchedule.term, calendarCourse.term),
-              ),
-            )
-            .innerJoin(courseCatalog, eq(courseCatalog.semester, calendarCourse.semester))
-            .where(eq(calendar.id, calendarId)),
-        catch: (cause) =>
-          new CourseSyncError({
-            operation: "read",
-            message: "Could not read calendar feed",
-            cause,
-          }),
-      }),
-    );
+    const rows = selectedCalendar.courses.flatMap((course) => {
+      if (!course.catalog || !course.schedule) return [];
+      return [{ ...course, catalog: course.catalog.courses, events: course.schedule.events }];
+    });
 
     const customRows = await Promise.all([
       db
