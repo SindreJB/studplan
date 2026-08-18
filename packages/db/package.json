@@ -9,7 +9,7 @@
   },
   "scripts": {
     "db": "drizzle-kit",
-    "auth:generate": "vpx auth@rc generate --config ../auth/src/auth.ts --y --output ./src/schema/auth.schema.ts",
+    "auth:generate": "vpx auth@rc generate --config ../auth/auth.generate.ts --y --output ./src/schema/auth.schema.ts",
     "generate": "drizzle-kit generate"
   },
   "dependencies": {

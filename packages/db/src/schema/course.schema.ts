@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { defineRelationsPart, sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth.schema";
@@ -141,4 +141,41 @@ export const courseSchedule = sqliteTable(
     syncedAt: integer("synced_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.semester, table.courseId, table.term] })],
+);
+
+export const courseRelations = defineRelationsPart(
+  { user, calendar, calendarCourse, calendarEvent, courseCatalog, courseEvent, courseSchedule },
+  (r) => ({
+    calendar: {
+      user: r.one.user({ from: r.calendar.userId, to: r.user.id }),
+      courses: r.many.calendarCourse({
+        from: r.calendar.id,
+        to: r.calendarCourse.calendarId,
+      }),
+      events: r.many.calendarEvent({ from: r.calendar.id, to: r.calendarEvent.calendarId }),
+    },
+    calendarCourse: {
+      calendar: r.one.calendar({
+        from: r.calendarCourse.calendarId,
+        to: r.calendar.id,
+      }),
+      catalog: r.one.courseCatalog({
+        from: r.calendarCourse.semester,
+        to: r.courseCatalog.semester,
+      }),
+      schedule: r.one.courseSchedule({
+        from: [r.calendarCourse.semester, r.calendarCourse.courseId, r.calendarCourse.term],
+        to: [r.courseSchedule.semester, r.courseSchedule.courseId, r.courseSchedule.term],
+      }),
+    },
+    courseEvent: {
+      creator: r.one.user({ from: r.courseEvent.creatorId, to: r.user.id }),
+    },
+    calendarEvent: {
+      calendar: r.one.calendar({
+        from: r.calendarEvent.calendarId,
+        to: r.calendar.id,
+      }),
+    },
+  }),
 );

@@ -2,7 +2,7 @@ import "@tanstack/react-start/server-only";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { db } from "@repo/db";
-import * as schema from "@repo/db/schema";
+import schema from "@repo/db/schema";
 import { betterAuth } from "better-auth/minimal";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { env } from "cloudflare:workers";
@@ -14,7 +14,7 @@ const bindings = env as {
   GITHUB_CLIENT_SECRET: string;
 };
 
-const createAuth = () =>
+export const createAuth = () =>
   betterAuth({
     baseURL: bindings.APP_URL,
     secret: bindings.BETTER_AUTH_SECRET,

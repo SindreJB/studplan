@@ -1,18 +1,14 @@
 import { db } from "@repo/db";
-import {
-  calendar,
-  calendarCourse,
-  calendarEvent,
-  courseCatalog,
-  courseEvent,
-  courseSchedule,
-} from "@repo/db/schema";
+import { schema } from "@repo/db/schema";
 import { Result } from "better-result";
 import { and, eq } from "drizzle-orm";
 
 import { includeCourseEvent } from "./course-event-filter.ts";
 import { CourseSyncError } from "./course-sync.server.ts";
 import { createIcal } from "./ical.ts";
+
+const { calendar, calendarCourse, calendarEvent, courseCatalog, courseEvent, courseSchedule } =
+  schema;
 
 export type CalendarFeed = "unfiltered" | "filtered" | { courseId: string };
 

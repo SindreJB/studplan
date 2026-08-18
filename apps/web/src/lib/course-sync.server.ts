@@ -1,13 +1,5 @@
 import { db } from "@repo/db";
-import {
-  calendar,
-  calendarCourse,
-  calendarEvent,
-  courseCatalog,
-  courseEvent,
-  courseSchedule,
-  type CourseScheduleEvent,
-} from "@repo/db/schema";
+import { schema, type CourseScheduleEvent } from "@repo/db/schema";
 import { Result, TaggedError } from "better-result";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -19,6 +11,9 @@ import {
   type Schedule,
   type TpApiError,
 } from "./tp.server.ts";
+
+const { calendar, calendarCourse, calendarEvent, courseCatalog, courseEvent, courseSchedule } =
+  schema;
 
 const TP_BATCH_SIZE = 20;
 
