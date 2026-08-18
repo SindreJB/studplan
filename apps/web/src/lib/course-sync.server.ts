@@ -385,6 +385,17 @@ export function removeCalendarCourse(userId: string, calendarId: string, selecti
   });
 }
 
+export function deleteCalendar(userId: string, calendarId: string) {
+  return Result.tryPromise({
+    try: () =>
+      db
+        .delete(calendar)
+        .where(and(eq(calendar.id, calendarId), eq(calendar.userId, userId)))
+        .returning({ id: calendar.id }),
+    catch: (cause) => databaseError("write", cause),
+  });
+}
+
 export function createCalendar(userId: string, name: string) {
   return Result.tryPromise({
     try: async () => {

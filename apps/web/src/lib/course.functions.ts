@@ -7,6 +7,7 @@ import {
   addCalendarCourse,
   createCalendar,
   createCalendarEvent,
+  deleteCalendar,
   createCourseEvent,
   createDemoCalendar,
   listAvailableCourses,
@@ -77,6 +78,15 @@ export const $createCalendar = createServerFn({ method: "POST" })
     return result.value;
   });
 
+export const $deleteCalendar = createServerFn({ method: "POST" })
+  .middleware([freshAuthMiddleware])
+  .validator(z.object({ calendarId: calendarIdSchema }))
+  .handler(async ({ data, context }) => {
+    const result = await deleteCalendar(context.user.id, data.calendarId);
+    if (result.isErr()) throw result.error;
+    return result.value;
+  });
+
 export const $getMySchedule = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(z.object({ calendarId: calendarIdSchema, semester: semesterSchema }))
@@ -96,7 +106,7 @@ const eventSchema = z.object({
   startsAt: z.coerce.date(),
   endsAt: z.coerce.date(),
   location: z.string().trim().max(200).optional(),
-  link: z.string().url().optional(),
+  link: z.url().optional(),
 });
 
 export const $createCourseEvent = createServerFn({ method: "POST" })

@@ -6,7 +6,9 @@ import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { addDays, addWeeks, format, startOfWeek } from "date-fns";
+import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 
 import { positionEvents } from "#/lib/calendar-layout.ts";
 import {
@@ -14,6 +16,7 @@ import {
   $createCalendar,
   $createDemoCalendar,
   $createCalendarEvent,
+  $deleteCalendar,
   $createCourseEvent,
   $getMySchedule,
   $getPublicOrigin,
@@ -27,7 +30,41 @@ import {
 
 type CalendarEvent = CourseScheduleEvent & { courseId: string; term: number };
 
+const eventFormSchema = z
+  .object({
+    course: z.string().min(1, "Course is required"),
+    title: z.string().refine((value) => value.trim().length > 0, "Title is required"),
+    startsAt: z.string().min(1, "Start time is required"),
+    endsAt: z.string().min(1, "End time is required"),
+    location: z.string(),
+    link: z.union([z.literal(""), z.url("Enter a valid URL")]),
+    description: z.string(),
+    publishToGlobal: z.boolean(),
+  })
+  .refine(({ startsAt, endsAt }) => !startsAt || !endsAt || new Date(startsAt) < new Date(endsAt), {
+    path: ["endsAt"],
+    message: "End time must be after the start time",
+  });
+
+const eventFields = [
+  { name: "title", placeholder: "Title", type: undefined },
+  { name: "startsAt", placeholder: "Start time", type: "datetime-local" },
+  { name: "endsAt", placeholder: "End time", type: "datetime-local" },
+  { name: "location", placeholder: "Location (optional)", type: undefined },
+  { name: "link", placeholder: "Link (optional)", type: "url" },
+  { name: "description", placeholder: "Description (optional)", type: undefined },
+] as const;
+
 const HOUR_HEIGHT = 64;
+
+function ValidationMessage({ errors }: { errors: readonly unknown[] }) {
+  const error = errors[0];
+  const message =
+    error && typeof error === "object" && "message" in error && typeof error.message === "string"
+      ? error.message
+      : null;
+  return message ? <p className="text-xs text-destructive">{message}</p> : null;
+}
 
 function currentSemester(date = new Date()) {
   return `${String(date.getFullYear()).slice(-2)}${date.getMonth() < 6 ? "v" : "h"}`;
@@ -80,6 +117,7 @@ function CalendarPage() {
   const router = useRouter();
   const createCalendar = useServerFn($createCalendar);
   const createDemoCalendar = useServerFn($createDemoCalendar);
+  const deleteCalendar = useServerFn($deleteCalendar);
   const addCourse = useServerFn($addCalendarCourse);
   const removeCourse = useServerFn($removeCalendarCourse);
   const updateExcludedSeries = useServerFn($updateExcludedSeries);
@@ -120,6 +158,47 @@ function CalendarPage() {
   const addedCourses =
     calendarData.find((data) => data.calendarId === activeCalendarId)?.courses ?? [];
   const colors = courseColors(addedCourses);
+  const eventForm = useForm({
+    defaultValues: {
+      course: addedCourses[0] ? courseKey(addedCourses[0].id, addedCourses[0].term) : "",
+      title: "",
+      startsAt: "",
+      endsAt: "",
+      location: "",
+      link: "",
+      description: "",
+      publishToGlobal: false,
+    },
+    validators: { onChange: eventFormSchema, onSubmit: eventFormSchema },
+    onSubmit: async ({ value, formApi }) => {
+      const [courseId, term] = value.course.split("¤");
+      const data = {
+        semester,
+        courseId,
+        term: Number(term),
+        title: value.title.trim(),
+        description: value.description.trim() || undefined,
+        startsAt: new Date(value.startsAt),
+        endsAt: new Date(value.endsAt),
+        location: value.location.trim() || undefined,
+        link: value.link || undefined,
+      };
+      if (value.publishToGlobal) {
+        await createCourseEvent({ data });
+      } else {
+        await createCalendarEvent({ data: { ...data, calendarId: activeCalendarId } });
+      }
+      formApi.reset();
+      await router.invalidate({ sync: true });
+    },
+  });
+
+  async function handleDeleteCalendar() {
+    if (!activeCalendarId || !window.confirm("Delete this calendar and all of its events?")) return;
+    await deleteCalendar({ data: { calendarId: activeCalendarId } });
+    setCalendarId(calendars.find((calendar) => calendar.id !== activeCalendarId)?.id ?? "");
+    await router.invalidate({ sync: true });
+  }
 
   async function handleRemoveCourse(id: string, term: number) {
     await removeCourse({ data: { calendarId: activeCalendarId, semester, id, term } });
@@ -249,7 +328,7 @@ function CalendarPage() {
         </p>
       ) : (
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
             <select
               className="rounded-md border bg-background px-3 py-2 text-sm"
               value={activeCalendarId}
@@ -261,17 +340,16 @@ function CalendarPage() {
                 </option>
               ))}
             </select>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => setWeekStart(addWeeks(weekStart, -1))}>
-                Previous
-              </Button>
-              <span className="min-w-40 text-center text-sm font-medium">
-                {format(weekStart, "d MMM")}–{format(addDays(weekEnd, -1), "d MMM yyyy")}
-              </span>
-              <Button variant="outline" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
-                Next
-              </Button>
-            </div>
+            <Button
+              aria-label="Delete calendar"
+              size="icon"
+              title="Delete calendar"
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteCalendar}
+            >
+              <Trash2Icon />
+            </Button>
           </div>
 
           <div className="rounded-lg border p-3">
@@ -296,6 +374,25 @@ function CalendarPage() {
                         <span>
                           <strong>{addedCourse.id}</strong> · {details?.nameEn ?? details?.name}
                         </span>
+                        <label className="mt-1 flex items-center gap-1 text-xs">
+                          <input
+                            type="checkbox"
+                            checked={addedCourse.globalEventsSubscribed}
+                            onChange={async (event) => {
+                              await updateGlobalEventsSubscription({
+                                data: {
+                                  calendarId: activeCalendarId,
+                                  semester,
+                                  id: addedCourse.id,
+                                  term: addedCourse.term,
+                                  subscribed: event.target.checked,
+                                },
+                              });
+                              await router.invalidate({ sync: true });
+                            }}
+                          />
+                          Subscribe to shared events
+                        </label>
                         {addedCourse.series.length > 0 && (
                           <details className="mt-1 text-xs">
                             <summary className="cursor-pointer">Recurring events</summary>
@@ -336,122 +433,95 @@ function CalendarPage() {
           </div>
 
           <section className="rounded-lg border p-4">
-            <h2 className="mb-3 text-sm font-semibold">Course events</h2>
+            <h2 className="mb-3 text-sm font-semibold">Events</h2>
             <form
               className="grid gap-2 md:grid-cols-2"
-              onSubmit={async (event) => {
+              onSubmit={(event) => {
                 event.preventDefault();
-                const form = new FormData(event.currentTarget);
-                const course = String(form.get("course")).split("¤");
-                const data = {
-                  semester,
-                  courseId: course[0],
-                  term: Number(course[1]),
-                  title: String(form.get("title")),
-                  description: String(form.get("description") || "") || undefined,
-                  startsAt: new Date(String(form.get("startsAt"))),
-                  endsAt: new Date(String(form.get("endsAt"))),
-                  location: String(form.get("location") || "") || undefined,
-                  link: String(form.get("link") || "") || undefined,
-                };
-                await createCourseEvent({ data });
-                event.currentTarget.reset();
-                await router.invalidate({ sync: true });
+                eventForm.handleSubmit();
               }}
             >
-              <select
-                className="rounded-md border bg-background px-3 py-2 text-sm"
-                name="course"
-                required
-              >
-                {courses.map((course) => (
-                  <option key={`${course.id}-${course.term}`} value={`${course.id}¤${course.term}`}>
-                    {course.id} term {course.term}
-                  </option>
-                ))}
-              </select>
-              <Input name="title" placeholder="Title" required />
-              <Input name="startsAt" type="datetime-local" required />
-              <Input name="endsAt" type="datetime-local" required />
-              <Input name="location" placeholder="Location (optional)" />
-              <Input name="link" type="url" placeholder="Link (optional)" />
-              <Input name="description" placeholder="Description (optional)" />
-              <Button type="submit">Publish to course pool</Button>
-            </form>
-            <div className="mt-4 space-y-2 text-sm">
-              {addedCourses.map((course) => (
-                <label
-                  className="flex items-center gap-2"
-                  key={`${course.id}-${course.term}-subscription`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={course.globalEventsSubscribed}
-                    onChange={async (event) => {
-                      await updateGlobalEventsSubscription({
-                        data: {
-                          calendarId: activeCalendarId,
-                          semester,
-                          id: course.id,
-                          term: course.term,
-                          subscribed: event.target.checked,
-                        },
-                      });
-                      await router.invalidate({ sync: true });
-                    }}
-                  />{" "}
-                  Subscribe to {course.id} shared events
-                </label>
+              <eventForm.Field name="course">
+                {(field) => (
+                  <div className="space-y-1">
+                    <select
+                      aria-invalid={field.state.meta.errors.length > 0}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                    >
+                      <option value="">Select a course</option>
+                      {addedCourses.map((course) => (
+                        <option
+                          key={courseKey(course.id, course.term)}
+                          value={courseKey(course.id, course.term)}
+                        >
+                          {course.id} term {course.term}
+                        </option>
+                      ))}
+                    </select>
+                    <ValidationMessage errors={field.state.meta.errors} />
+                  </div>
+                )}
+              </eventForm.Field>
+              {eventFields.map((input) => (
+                <eventForm.Field key={input.name} name={input.name}>
+                  {(field) => (
+                    <div className="space-y-1">
+                      <Input
+                        aria-invalid={field.state.meta.errors.length > 0}
+                        name={field.name}
+                        type={input.type}
+                        placeholder={input.placeholder}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) => field.handleChange(event.target.value)}
+                      />
+                      <ValidationMessage errors={field.state.meta.errors} />
+                    </div>
+                  )}
+                </eventForm.Field>
               ))}
-            </div>
-            <h3 className="mt-6 mb-3 text-sm font-semibold">Personal event</h3>
-            <form
-              className="grid gap-2 md:grid-cols-2"
-              onSubmit={async (event) => {
-                event.preventDefault();
-                const form = new FormData(event.currentTarget);
-                const course = String(form.get("personal-course")).split("¤");
-                await createCalendarEvent({
-                  data: {
-                    calendarId: activeCalendarId,
-                    semester,
-                    courseId: course[0],
-                    term: Number(course[1]),
-                    title: String(form.get("personal-title")),
-                    description: String(form.get("personal-description") || "") || undefined,
-                    startsAt: new Date(String(form.get("personal-startsAt"))),
-                    endsAt: new Date(String(form.get("personal-endsAt"))),
-                    location: String(form.get("personal-location") || "") || undefined,
-                    link: String(form.get("personal-link") || "") || undefined,
-                  },
-                });
-                event.currentTarget.reset();
-                await router.invalidate({ sync: true });
-              }}
-            >
-              <select
-                className="rounded-md border bg-background px-3 py-2 text-sm"
-                name="personal-course"
-                required
-              >
-                {addedCourses.map((course) => (
-                  <option
-                    key={`${course.id}-${course.term}-personal`}
-                    value={`${course.id}¤${course.term}`}
+              <eventForm.Field name="publishToGlobal">
+                {(field) => (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      name={field.name}
+                      type="checkbox"
+                      checked={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.checked)}
+                    />
+                    Publish to the course pool
+                  </label>
+                )}
+              </eventForm.Field>
+              <eventForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                {([canSubmit, isSubmitting]) => (
+                  <Button
+                    type="submit"
+                    disabled={!addedCourses.length || !canSubmit || isSubmitting}
                   >
-                    {course.id} term {course.term}
-                  </option>
-                ))}
-              </select>
-              <Input name="personal-title" placeholder="Title" required />
-              <Input name="personal-startsAt" type="datetime-local" required />
-              <Input name="personal-endsAt" type="datetime-local" required />
-              <Input name="personal-location" placeholder="Location (optional)" />
-              <Input name="personal-link" type="url" placeholder="Link (optional)" />
-              <Input name="personal-description" placeholder="Description (optional)" />
-              <Button type="submit">Add personal event</Button>
+                    Add event
+                  </Button>
+                )}
+              </eventForm.Subscribe>
             </form>
           </section>
+
+          <div className="flex items-center justify-center gap-2">
+            <Button variant="outline" onClick={() => setWeekStart(addWeeks(weekStart, -1))}>
+              Previous
+            </Button>
+            <span className="min-w-40 text-center text-sm font-medium">
+              {format(weekStart, "d MMM")}–{format(addDays(weekEnd, -1), "d MMM yyyy")}
+            </span>
+            <Button variant="outline" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
+              Next
+            </Button>
+          </div>
 
           <WeekCalendar
             colors={colors}
