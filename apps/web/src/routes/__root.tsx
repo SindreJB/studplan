@@ -26,21 +26,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "studplan-v2",
+        title: "Studplan — Course schedules for Google Calendar",
       },
       {
         name: "description",
-        content: "A TanStack Start project scaffolded with create-mugnavo.",
+        content: "Create a Google Calendar from your course schedule.",
       },
     ],
-    links: [
-      // Replace with your icons here, or remove if you have a favicon.ico in public/
-      {
-        rel: "icon",
-        href: "https://mugnavo.com/favicon.ico",
-      },
-      { rel: "stylesheet", href: appCss },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: RootDocument,
 });

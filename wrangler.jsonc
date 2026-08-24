@@ -17,8 +17,13 @@
     "APP_URL": "https://studplan.ahse.dev",
   },
   "secrets": {
-    "required": ["BETTER_AUTH_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"],
+    "required": ["BETTER_AUTH_SECRET"],
   },
+  "send_email": [
+    {
+      "name": "EMAIL",
+    },
+  ],
   "d1_databases": [
     {
       "binding": "DB",

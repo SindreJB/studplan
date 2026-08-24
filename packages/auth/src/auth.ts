@@ -10,8 +10,7 @@ import { env } from "cloudflare:workers";
 const bindings = env as {
   APP_URL: string;
   BETTER_AUTH_SECRET: string;
-  GITHUB_CLIENT_ID: string;
-  GITHUB_CLIENT_SECRET: string;
+  EMAIL: SendEmail;
 };
 
 export const createAuth = () =>
@@ -37,11 +36,17 @@ export const createAuth = () =>
       },
     },
 
-    // https://better-auth.com/docs/concepts/oauth
-    socialProviders: {
-      github: {
-        clientId: bindings.GITHUB_CLIENT_ID,
-        clientSecret: bindings.GITHUB_CLIENT_SECRET,
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: false,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        await bindings.EMAIL.send({
+          from: `no-reply@${new URL(bindings.APP_URL).hostname}`,
+          to: user.email,
+          subject: "Reset your Studplan password",
+          text: `Reset your Studplan password: ${url}\n\nThis link expires in one hour.`,
+        });
       },
     },
 
