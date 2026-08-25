@@ -21,7 +21,7 @@ export function CurrentTimeIndicator({
   if (now.toDateString() !== date.toDateString()) return null;
 
   const offset = ((now.getHours() * 60 + now.getMinutes() - startHour * 60) / 60) * HOUR_HEIGHT;
-  const top = offset >= 0 && offset <= height ? offset : 0;
+  const top = Math.max(0, Math.min(offset, height - 2));
 
   return (
     <div

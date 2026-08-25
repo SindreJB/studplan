@@ -26,6 +26,7 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
                   term: true,
                   excludedSourceIds: true,
                 },
+                where: isCourseFeed(feed) ? { courseId: feed.courseId } : undefined,
                 with: {
                   catalog: { columns: { courses: true } },
                   schedule: { columns: { events: true } },
