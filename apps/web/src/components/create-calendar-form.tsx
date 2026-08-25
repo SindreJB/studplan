@@ -2,13 +2,13 @@ import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { CalendarPlus } from "lucide-react";
 import { z } from "zod";
 
 import { FormError } from "#/components/form-error";
-import { $createCalendar } from "#/lib/course.functions";
+import { createCalendarMutationOptions } from "#/lib/mutations";
 import { currentSemester, semesterOptions } from "#/lib/semester";
 
 const schema = z.object({
@@ -17,14 +17,14 @@ const schema = z.object({
 });
 
 export function CreateCalendarForm() {
-  const createCalendar = useServerFn($createCalendar);
+  const createCalendar = useMutation(createCalendarMutationOptions());
   const navigate = useNavigate();
   const router = useRouter();
   const form = useForm({
     defaultValues: { name: "", semester: currentSemester() },
     validators: { onSubmit: schema },
     onSubmit: async ({ value }) => {
-      const calendar = await createCalendar({ data: value });
+      const calendar = await createCalendar.mutateAsync(value);
       if (!calendar) return;
       await router.invalidate({ sync: true });
       await navigate({ to: "/app/$calendarId", params: { calendarId: calendar.id } });

@@ -8,13 +8,13 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@repo/ui/components/combobox";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
-import { $addCalendarCourse } from "#/lib/course.functions";
+import { addCalendarCourseMutationOptions } from "#/lib/mutations";
 
 function courseLabel(course: CourseCatalogItem) {
   return `${course.id} · ${course.nameEn ?? course.name ?? course.nameNb ?? "Unnamed course"} · term ${course.term}`;
@@ -29,12 +29,11 @@ export function CoursePicker({
   semester: string;
   courses: CourseCatalogItem[];
 }) {
-  const addCourse = useServerFn($addCalendarCourse);
+  const addCourse = useMutation(addCalendarCourseMutationOptions());
   const router = useRouter();
   const listRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<CourseCatalogItem | null>(null);
-  const [pending, setPending] = useState(false);
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
     if (!normalized) return courses;
@@ -51,17 +50,15 @@ export function CoursePicker({
 
   async function addSelectedCourse() {
     if (!selected) return;
-    setPending(true);
-    try {
-      await addCourse({
-        data: { calendarId, semester, id: selected.id, term: selected.term },
-      });
-      setSelected(null);
-      setQuery("");
-      await router.invalidate({ sync: true });
-    } finally {
-      setPending(false);
-    }
+    await addCourse.mutateAsync({
+      calendarId,
+      semester,
+      id: selected.id,
+      term: selected.term,
+    });
+    setSelected(null);
+    setQuery("");
+    await router.invalidate({ sync: true });
   }
 
   return (
@@ -104,7 +101,7 @@ export function CoursePicker({
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
-      <Button type="button" disabled={!selected || pending} onClick={addSelectedCourse}>
+      <Button type="button" disabled={!selected || addCourse.isPending} onClick={addSelectedCourse}>
         <Plus /> Add
       </Button>
     </div>

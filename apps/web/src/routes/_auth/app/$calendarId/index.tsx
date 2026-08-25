@@ -1,15 +1,15 @@
 import { Button } from "@repo/ui/components/button";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
 import { BookOpen, Trash2 } from "lucide-react";
 
 import { CoursePicker } from "#/components/course-picker";
 import {
-  $removeCalendarCourse,
-  $updateCalendarCourseColor,
-  $updateExcludedSeries,
-} from "#/lib/course.functions";
+  removeCalendarCourseMutationOptions,
+  updateCalendarCourseColorMutationOptions,
+  updateExcludedSeriesMutationOptions,
+} from "#/lib/mutations";
 import { availableCoursesQueryOptions, calendarCoursesQueryOptions } from "#/lib/queries/courses";
 
 export const Route = createFileRoute("/_auth/app/$calendarId/")({
@@ -34,9 +34,9 @@ function CoursesPage() {
   const { calendarId } = Route.useParams();
   const { semester, courses, selected } = Route.useLoaderData();
   const router = useRouter();
-  const removeCourse = useServerFn($removeCalendarCourse);
-  const updateColor = useServerFn($updateCalendarCourseColor);
-  const updateExcluded = useServerFn($updateExcludedSeries);
+  const removeCourse = useMutation(removeCalendarCourseMutationOptions());
+  const updateColor = useMutation(updateCalendarCourseColorMutationOptions());
+  const updateExcluded = useMutation(updateExcludedSeriesMutationOptions());
 
   async function refresh() {
     await router.invalidate({ sync: true });
@@ -46,14 +46,12 @@ function CoursesPage() {
     const excludedSourceIds = course.excludedSourceIds.includes(sourceId)
       ? course.excludedSourceIds.filter((id) => id !== sourceId)
       : [...course.excludedSourceIds, sourceId];
-    await updateExcluded({
-      data: {
-        calendarId,
-        semester,
-        id: course.id,
-        term: course.term,
-        excludedSourceIds,
-      },
+    await updateExcluded.mutateAsync({
+      calendarId,
+      semester,
+      id: course.id,
+      term: course.term,
+      excludedSourceIds,
     });
     await refresh();
   }
@@ -94,14 +92,12 @@ function CoursesPage() {
                   aria-label={`Color for ${course.id}`}
                   className="size-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
                   onChange={async (event) => {
-                    await updateColor({
-                      data: {
-                        calendarId,
-                        semester,
-                        id: course.id,
-                        term: course.term,
-                        color: event.target.value,
-                      },
+                    await updateColor.mutateAsync({
+                      calendarId,
+                      semester,
+                      id: course.id,
+                      term: course.term,
+                      color: event.target.value,
                     });
                     await refresh();
                   }}
@@ -142,8 +138,11 @@ function CoursesPage() {
                   variant="ghost"
                   aria-label={`Remove ${course.id}`}
                   onClick={async () => {
-                    await removeCourse({
-                      data: { calendarId, semester, id: course.id, term: course.term },
+                    await removeCourse.mutateAsync({
+                      calendarId,
+                      semester,
+                      id: course.id,
+                      term: course.term,
                     });
                     await refresh();
                   }}

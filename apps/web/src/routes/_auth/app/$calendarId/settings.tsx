@@ -1,9 +1,12 @@
 import { Button } from "@repo/ui/components/button";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { ExternalLink, Trash2 } from "lucide-react";
 
-import { $deleteCalendar, $updateCalendarSemester } from "#/lib/course.functions";
+import {
+  deleteCalendarMutationOptions,
+  updateCalendarSemesterMutationOptions,
+} from "#/lib/mutations";
 import { calendarCoursesQueryOptions } from "#/lib/queries/courses";
 import { publicOriginQueryOptions } from "#/lib/queries/public-origin";
 import { semesterOptions } from "#/lib/semester";
@@ -28,8 +31,8 @@ export const Route = createFileRoute("/_auth/app/$calendarId/settings")({
 function SettingsPage() {
   const { calendarId } = Route.useParams();
   const { origin, calendar, courses } = Route.useLoaderData();
-  const deleteCalendar = useServerFn($deleteCalendar);
-  const updateSemester = useServerFn($updateCalendarSemester);
+  const deleteCalendar = useMutation(deleteCalendarMutationOptions());
+  const updateSemester = useMutation(updateCalendarSemesterMutationOptions());
   const navigate = useNavigate();
   const router = useRouter();
   const feeds = [
@@ -40,6 +43,10 @@ function SettingsPage() {
       url: `${origin}/calendars/${calendarId}/${encodeURIComponent(course.id)}.ics`,
     })),
   ];
+
+  async function refresh() {
+    await router.invalidate({ sync: true });
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8">
@@ -64,8 +71,8 @@ function SettingsPage() {
               event.target.value = calendar.semester;
               return;
             }
-            await updateSemester({ data: { calendarId, semester } });
-            await router.invalidate({ sync: true });
+            await updateSemester.mutateAsync({ calendarId, semester });
+            await refresh();
           }}
         >
           {semesterOptions().map((semester) => (
@@ -107,8 +114,8 @@ function SettingsPage() {
           variant="destructive"
           onClick={async () => {
             if (!window.confirm(`Delete ${calendar?.name ?? "this calendar"}?`)) return;
-            await deleteCalendar({ data: { calendarId } });
-            await router.invalidate({ sync: true });
+            await deleteCalendar.mutateAsync({ calendarId });
+            await refresh();
             await navigate({ to: "/app" });
           }}
         >
