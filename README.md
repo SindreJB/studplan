@@ -16,13 +16,6 @@ vp run db:migrate:remote
 `wrangler d1 create --update-config` writes the new database ID to the root
 `wrangler.jsonc`.
 
-Configure these GitHub OAuth callbacks:
-
-```text
-http://localhost:3000/api/auth/callback/github
-https://studplan.ahse.dev/api/auth/callback/github
-```
-
 ## Local development
 
 ```sh
@@ -38,8 +31,7 @@ Put production secrets in the ignored root `.env.prod`:
 
 ```dotenv
 BETTER_AUTH_SECRET=...
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
+SENTRY_DSN=...
 ```
 
 Then deploy:

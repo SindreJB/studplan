@@ -5,7 +5,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "apps/web/src/server.ts",
   "triggers": {
-    "crons": ["0 3 * * *", "0 4 * * 0"],
+    "crons": ["0 3 * * *", "0 4 * * 1"],
   },
   "routes": [
     {
@@ -17,7 +17,7 @@
     "APP_URL": "https://studplan.ahse.dev",
   },
   "secrets": {
-    "required": ["BETTER_AUTH_SECRET"],
+    "required": ["BETTER_AUTH_SECRET", "SENTRY_DSN"],
   },
   "send_email": [
     {
