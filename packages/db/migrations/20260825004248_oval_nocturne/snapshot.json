@@ -1,17 +1,13 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "dbe9d977-9b8e-4b09-8472-b37097b923d1",
+  "id": "d892e882-3462-4a27-bfad-5bccddda0d30",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
       "name": "account",
-      "entityType": "tables"
-    },
-    {
-      "name": "passkey",
       "entityType": "tables"
     },
     {
@@ -181,116 +177,6 @@
       "name": "updated_at",
       "entityType": "columns",
       "table": "account"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "id",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "name",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "public_key",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "user_id",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "credential_id",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "counter",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "device_type",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "backed_up",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "transports",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "passkey"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "aaguid",
-      "entityType": "columns",
-      "table": "passkey"
     },
     {
       "type": "text",
@@ -728,21 +614,6 @@
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
-      "name": "fk_passkey_user_id_user_id_fk",
-      "entityType": "fks",
-      "table": "passkey"
-    },
-    {
-      "columns": [
-        "user_id"
-      ],
-      "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "nameExplicit": false,
       "name": "fk_session_user_id_user_id_fk",
       "entityType": "fks",
       "table": "session"
@@ -807,15 +678,6 @@
       "nameExplicit": false,
       "name": "account_pk",
       "table": "account",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "passkey_pk",
-      "table": "passkey",
       "entityType": "pks"
     },
     {
@@ -894,34 +756,6 @@
       "name": "account_userId_idx",
       "entityType": "indexes",
       "table": "account"
-    },
-    {
-      "columns": [
-        {
-          "value": "user_id",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "passkey_userId_idx",
-      "entityType": "indexes",
-      "table": "passkey"
-    },
-    {
-      "columns": [
-        {
-          "value": "credential_id",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "passkey_credentialID_idx",
-      "entityType": "indexes",
-      "table": "passkey"
     },
     {
       "columns": [

@@ -16,21 +16,6 @@ CREATE TABLE `account` (
 	CONSTRAINT `fk_account_user_id_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
 --> statement-breakpoint
-CREATE TABLE `passkey` (
-	`id` text PRIMARY KEY,
-	`name` text,
-	`public_key` text NOT NULL,
-	`user_id` text NOT NULL,
-	`credential_id` text NOT NULL,
-	`counter` integer NOT NULL,
-	`device_type` text NOT NULL,
-	`backed_up` integer NOT NULL,
-	`transports` text,
-	`created_at` integer,
-	`aaguid` text,
-	CONSTRAINT `fk_passkey_user_id_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
-);
---> statement-breakpoint
 CREATE TABLE `session` (
 	`id` text PRIMARY KEY,
 	`expires_at` integer NOT NULL,
@@ -100,8 +85,6 @@ CREATE TABLE `course_schedule` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `account_issuer_accountId_uidx` ON `account` (`issuer`,`account_id`);--> statement-breakpoint
 CREATE INDEX `account_userId_idx` ON `account` (`user_id`);--> statement-breakpoint
-CREATE INDEX `passkey_userId_idx` ON `passkey` (`user_id`);--> statement-breakpoint
-CREATE INDEX `passkey_credentialID_idx` ON `passkey` (`credential_id`);--> statement-breakpoint
 CREATE INDEX `session_userId_idx` ON `session` (`user_id`);--> statement-breakpoint
 CREATE INDEX `verification_identifier_idx` ON `verification` (`identifier`);--> statement-breakpoint
 CREATE INDEX `calendar_user_idx` ON `calendar` (`user_id`);--> statement-breakpoint

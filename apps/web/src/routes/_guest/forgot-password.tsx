@@ -10,6 +10,8 @@ import { z } from "zod";
 
 import { FormError } from "#/components/form-error";
 
+import { Route as ResetPasswordRoute } from "./reset-password";
+
 const forgotPasswordSchema = z.object({ email: z.email("Enter a valid email address") });
 
 export const Route = createFileRoute("/_guest/forgot-password")({
@@ -18,7 +20,9 @@ export const Route = createFileRoute("/_guest/forgot-password")({
 
 function ForgotPasswordForm() {
   const reset = useMutation({
-    ...requestPasswordResetMutationOptions(`${window.location.origin}/reset-password`),
+    ...requestPasswordResetMutationOptions(
+      () => new URL(ResetPasswordRoute.fullPath, window.location.origin).href,
+    ),
     onSuccess: (_, _variables, _onMutateResult, context) =>
       context.client.invalidateQueries({ queryKey: authQueryOptions().queryKey }),
   });

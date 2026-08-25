@@ -5,7 +5,7 @@ import { Label } from "@repo/ui/components/label";
 import { toast } from "@repo/ui/components/toast";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
 import { z } from "zod";
 
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_guest/signup")({ component: SignupForm }
 
 function SignupForm() {
   const { redirectUrl } = Route.useRouteContext();
+  const navigate = useNavigate();
   const signup = useMutation({
     ...signUpMutationOptions(),
     onSuccess: ({ error }) => {
@@ -33,7 +34,7 @@ function SignupForm() {
         toast.add({ type: "error", description: error.message || "Sign-up failed." });
         return;
       }
-      window.location.href = redirectUrl;
+      void navigate({ to: redirectUrl, reloadDocument: true });
     },
   });
   const form = useForm({

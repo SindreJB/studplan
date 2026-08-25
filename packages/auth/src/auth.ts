@@ -1,6 +1,5 @@
 import "@tanstack/react-start/server-only";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { passkey } from "@better-auth/passkey";
 import { db } from "@repo/db";
 import schema from "@repo/db/schema";
 import { betterAuth } from "better-auth/minimal";
@@ -27,7 +26,7 @@ export const createAuth = () =>
     }),
 
     // https://better-auth.com/docs/integrations/tanstack#usage-tips
-    plugins: [passkey({ rpName: "Studplan" }), tanstackStartCookies()],
+    plugins: [tanstackStartCookies()],
 
     // https://better-auth.com/docs/concepts/session-management#session-caching
     session: {

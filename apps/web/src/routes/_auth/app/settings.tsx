@@ -1,9 +1,6 @@
-import { authClient } from "@repo/auth/auth-client";
 import {
-  addPasskeyMutationOptions,
   changePasswordMutationOptions,
   deleteAccountMutationOptions,
-  removePasskeyMutationOptions,
 } from "@repo/auth/tanstack/mutations";
 import { authQueryOptions } from "@repo/auth/tanstack/queries";
 import { Button } from "@repo/ui/components/button";
@@ -12,8 +9,8 @@ import { Label } from "@repo/ui/components/label";
 import { toast } from "@repo/ui/components/toast";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { KeyRound, Trash2 } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Trash2 } from "lucide-react";
 import { z } from "zod";
 
 import { FormError } from "#/components/form-error";
@@ -35,24 +32,7 @@ export const Route = createFileRoute("/_auth/app/settings")({ component: Account
 
 function AccountSettingsPage() {
   const { user } = Route.useRouteContext();
-  const passkeys = authClient.useListPasskeys();
-  const addPasskey = useMutation({
-    ...addPasskeyMutationOptions(),
-    onSuccess: async ({ error }, _variables, _onMutateResult, context) => {
-      await context.client.invalidateQueries({ queryKey: authQueryOptions().queryKey });
-      toast.add({
-        type: error ? "error" : "success",
-        description: error?.message || "Passkey added.",
-      });
-    },
-  });
-  const removePasskey = useMutation({
-    ...removePasskeyMutationOptions(),
-    onSuccess: async ({ error }, _variables, _onMutateResult, context) => {
-      await context.client.invalidateQueries({ queryKey: authQueryOptions().queryKey });
-      if (error) toast.add({ type: "error", description: error.message });
-    },
-  });
+  const navigate = useNavigate();
   const changePassword = useMutation({
     ...changePasswordMutationOptions(),
     onSuccess: async ({ error }, _variables, _onMutateResult, context) => {
@@ -71,7 +51,7 @@ function AccountSettingsPage() {
         return;
       }
       context.client.setQueryData(authQueryOptions().queryKey, null);
-      window.location.href = "/";
+      void navigate({ to: "/", reloadDocument: true });
     },
   });
   const passwordForm = useForm({
@@ -98,48 +78,6 @@ function AccountSettingsPage() {
         <h1 className="text-2xl font-semibold">Account settings</h1>
         <p className="text-sm text-muted-foreground">{user.email}</p>
       </header>
-
-      <section className="space-y-4 rounded-xl border bg-card p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-medium">Passkeys</h2>
-            <p className="text-sm text-muted-foreground">Sign in without entering your password.</p>
-          </div>
-          <Button
-            variant="outline"
-            disabled={addPasskey.isPending}
-            onClick={() => addPasskey.mutate()}
-          >
-            <KeyRound /> Add passkey
-          </Button>
-        </div>
-        <div className="divide-y rounded-lg border">
-          {passkeys.data?.length ? (
-            passkeys.data.map((passkey) => (
-              <div className="flex items-center justify-between gap-3 p-3" key={passkey.id}>
-                <div>
-                  <p className="text-sm font-medium">{passkey.name || "Passkey"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Added{" "}
-                    {new Date(passkey.createdAt).toLocaleDateString("en-GB", { timeZone: "UTC" })}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${passkey.name || "passkey"}`}
-                  disabled={removePasskey.isPending}
-                  onClick={() => removePasskey.mutate(passkey.id)}
-                >
-                  <Trash2 />
-                </Button>
-              </div>
-            ))
-          ) : (
-            <p className="p-4 text-sm text-muted-foreground">No passkeys added.</p>
-          )}
-        </div>
-      </section>
 
       <section className="rounded-xl border bg-card p-5">
         <h2 className="font-medium">Change password</h2>

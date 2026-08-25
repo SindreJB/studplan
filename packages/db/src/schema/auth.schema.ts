@@ -89,63 +89,27 @@ export const verification = sqliteTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const passkey = sqliteTable(
-  "passkey",
-  {
-    id: text("id").primaryKey(),
-    name: text("name"),
-    publicKey: text("public_key").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    credentialID: text("credential_id").notNull(),
-    counter: integer("counter").notNull(),
-    deviceType: text("device_type").notNull(),
-    backedUp: integer("backed_up", { mode: "boolean" }).notNull(),
-    transports: text("transports"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }),
-    aaguid: text("aaguid"),
+export const authRelations = defineRelationsPart({ user, session, account, verification }, (r) => ({
+  user: {
+    sessions: r.many.session({
+      from: r.user.id,
+      to: r.session.userId,
+    }),
+    accounts: r.many.account({
+      from: r.user.id,
+      to: r.account.userId,
+    }),
   },
-  (table) => [
-    index("passkey_userId_idx").on(table.userId),
-    index("passkey_credentialID_idx").on(table.credentialID),
-  ],
-);
-
-export const authRelations = defineRelationsPart(
-  { user, session, account, verification, passkey },
-  (r) => ({
-    user: {
-      sessions: r.many.session({
-        from: r.user.id,
-        to: r.session.userId,
-      }),
-      accounts: r.many.account({
-        from: r.user.id,
-        to: r.account.userId,
-      }),
-      passkeys: r.many.passkey({
-        from: r.user.id,
-        to: r.passkey.userId,
-      }),
-    },
-    session: {
-      user: r.one.user({
-        from: r.session.userId,
-        to: r.user.id,
-      }),
-    },
-    account: {
-      user: r.one.user({
-        from: r.account.userId,
-        to: r.user.id,
-      }),
-    },
-    passkey: {
-      user: r.one.user({
-        from: r.passkey.userId,
-        to: r.user.id,
-      }),
-    },
-  }),
-);
+  session: {
+    user: r.one.user({
+      from: r.session.userId,
+      to: r.user.id,
+    }),
+  },
+  account: {
+    user: r.one.user({
+      from: r.account.userId,
+      to: r.user.id,
+    }),
+  },
+}));

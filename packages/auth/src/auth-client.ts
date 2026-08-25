@@ -1,4 +1,3 @@
-import { passkeyClient } from "@better-auth/passkey/client";
 import { createAuthClient } from "better-auth/react";
 
 /**
@@ -9,6 +8,4 @@ import { createAuthClient } from "better-auth/react";
  *
  * For server/SSR operations, prefer `auth.api` instead, and wrap in a serverFn if needed.
  */
-export const authClient = createAuthClient({
-  plugins: [passkeyClient()],
-});
+export const authClient = createAuthClient();

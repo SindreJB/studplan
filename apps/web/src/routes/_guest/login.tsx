@@ -1,12 +1,12 @@
-import { passkeySignInMutationOptions, signInMutationOptions } from "@repo/auth/tanstack/mutations";
+import { signInMutationOptions } from "@repo/auth/tanstack/mutations";
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
 import { toast } from "@repo/ui/components/toast";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, KeyRoundIcon } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { CalendarDays } from "lucide-react";
 import { z } from "zod";
 
 import { FormError } from "#/components/form-error";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_guest/login")({ component: LoginForm });
 
 function LoginForm() {
   const { redirectUrl } = Route.useRouteContext();
+  const navigate = useNavigate();
   const login = useMutation({
     ...signInMutationOptions(),
     onSuccess: ({ error }) => {
@@ -27,17 +28,7 @@ function LoginForm() {
         toast.add({ type: "error", description: error.message || "Sign-in failed." });
         return;
       }
-      window.location.href = redirectUrl;
-    },
-  });
-  const passkeyLogin = useMutation({
-    ...passkeySignInMutationOptions(),
-    onSuccess: ({ error }) => {
-      if (error) {
-        toast.add({ type: "error", description: error.message || "Passkey sign-in failed." });
-        return;
-      }
-      window.location.href = redirectUrl;
+      void navigate({ to: redirectUrl, reloadDocument: true });
     },
   });
   const form = useForm({
@@ -106,25 +97,13 @@ function LoginForm() {
               className="w-full"
               size="lg"
               type="submit"
-              disabled={!canSubmit || isSubmitting || passkeyLogin.isPending}
+              disabled={!canSubmit || isSubmitting}
             >
               Sign in
             </Button>
           )}
         </form.Subscribe>
       </form>
-      <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:border-t">
-        <span className="relative z-10 bg-background px-2 text-muted-foreground">or</span>
-      </div>
-      <Button
-        variant="secondary"
-        size="lg"
-        disabled={login.isPending || passkeyLogin.isPending}
-        onClick={() => passkeyLogin.mutate()}
-      >
-        <KeyRoundIcon />
-        Sign in with a passkey
-      </Button>
       <p className="text-center text-sm text-muted-foreground">
         No account?{" "}
         <Link to="/signup" className="underline underline-offset-4">
