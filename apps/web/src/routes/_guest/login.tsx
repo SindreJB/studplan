@@ -1,4 +1,4 @@
-import { authClient } from "@repo/auth/auth-client";
+import { passkeySignInMutationOptions, signInMutationOptions } from "@repo/auth/tanstack/mutations";
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
@@ -9,7 +9,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, KeyRoundIcon } from "lucide-react";
 import { z } from "zod";
 
-import { FormError } from "#/components/form-error.tsx";
+import { FormError } from "#/components/form-error";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_guest/login")({ component: LoginForm });
 function LoginForm() {
   const { redirectUrl } = Route.useRouteContext();
   const login = useMutation({
-    mutationFn: (value: z.infer<typeof loginSchema>) => authClient.signIn.email(value),
+    ...signInMutationOptions(),
     onSuccess: ({ error }) => {
       if (error) {
         toast.add({ type: "error", description: error.message || "Sign-in failed." });
@@ -31,7 +31,7 @@ function LoginForm() {
     },
   });
   const passkeyLogin = useMutation({
-    mutationFn: () => authClient.signIn.passkey(),
+    ...passkeySignInMutationOptions(),
     onSuccess: ({ error }) => {
       if (error) {
         toast.add({ type: "error", description: error.message || "Passkey sign-in failed." });

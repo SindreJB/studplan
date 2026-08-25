@@ -1,4 +1,5 @@
-import { authClient } from "@repo/auth/auth-client";
+import { requestPasswordResetMutationOptions } from "@repo/auth/tanstack/mutations";
+import { authQueryOptions } from "@repo/auth/tanstack/queries";
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
@@ -7,7 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { FormError } from "#/components/form-error.tsx";
+import { FormError } from "#/components/form-error";
 
 const forgotPasswordSchema = z.object({ email: z.email("Enter a valid email address") });
 
@@ -17,11 +18,9 @@ export const Route = createFileRoute("/_guest/forgot-password")({
 
 function ForgotPasswordForm() {
   const reset = useMutation({
-    mutationFn: ({ email }: z.infer<typeof forgotPasswordSchema>) =>
-      authClient.requestPasswordReset({
-        email,
-        redirectTo: `${window.location.origin}/reset-password`,
-      }),
+    ...requestPasswordResetMutationOptions(`${window.location.origin}/reset-password`),
+    onSuccess: (_, _variables, _onMutateResult, context) =>
+      context.client.invalidateQueries({ queryKey: authQueryOptions().queryKey }),
   });
   const form = useForm({
     defaultValues: { email: "" },

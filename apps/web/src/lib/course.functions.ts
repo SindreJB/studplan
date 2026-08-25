@@ -6,23 +6,22 @@ import { z } from "zod";
 import {
   addCalendarCourse,
   createCalendar,
-  createCalendarEvent,
   deleteCalendar,
-  createCourseEvent,
-  createDemoCalendar,
   listAvailableCourses,
   listCalendarCourses,
-  listCalendarEvents,
   listCalendars,
   listCalendarSchedule,
-  listSubscribedCourseEvents,
   removeCalendarCourse,
+  updateCalendarCourseColor,
+  updateCalendarSemester,
   updateExcludedSeries,
-  updateGlobalEventsSubscription,
-} from "./course-sync.server.ts";
+} from "./course-sync.server";
 
 const semesterSchema = z.string().regex(/^\d{2}[vh]$/);
-const calendarIdSchema = z.uuid();
+const calendarIdSchema = z.union([
+  z.uuid(),
+  z.string().regex(/^[A-Za-z0-9_-]{10}$/, "Invalid calendar ID"),
+]);
 const selectionSchema = z.object({
   calendarId: calendarIdSchema,
   semester: semesterSchema,
@@ -60,20 +59,20 @@ export const $listCalendarCourses = createServerFn({ method: "GET" })
     return result.value;
   });
 
-export const $createDemoCalendar = createServerFn({ method: "POST" })
+export const $createCalendar = createServerFn({ method: "POST" })
   .middleware([freshAuthMiddleware])
-  .validator(z.object({ semester: semesterSchema }))
+  .validator(z.object({ name: z.string().trim().min(1).max(100), semester: semesterSchema }))
   .handler(async ({ data, context }) => {
-    const result = await createDemoCalendar(context.user.id, data.semester);
+    const result = await createCalendar(context.user.id, data.name, data.semester);
     if (result.isErr()) throw result.error;
     return result.value;
   });
 
-export const $createCalendar = createServerFn({ method: "POST" })
+export const $updateCalendarSemester = createServerFn({ method: "POST" })
   .middleware([freshAuthMiddleware])
-  .validator(z.object({ name: z.string().trim().min(1).max(100) }))
+  .validator(z.object({ calendarId: calendarIdSchema, semester: semesterSchema }))
   .handler(async ({ data, context }) => {
-    const result = await createCalendar(context.user.id, data.name);
+    const result = await updateCalendarSemester(context.user.id, data.calendarId, data.semester);
     if (result.isErr()) throw result.error;
     return result.value;
   });
@@ -96,63 +95,18 @@ export const $getMySchedule = createServerFn({ method: "GET" })
     return result.value;
   });
 
-const eventSchema = z.object({
-  calendarId: calendarIdSchema.optional(),
-  semester: semesterSchema,
-  courseId: z.string().trim().min(1).max(50),
-  term: z.number().int().positive(),
-  title: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(5000).optional(),
-  startsAt: z.coerce.date(),
-  endsAt: z.coerce.date(),
-  location: z.string().trim().max(200).optional(),
-  link: z.url().optional(),
-});
-
-export const $createCourseEvent = createServerFn({ method: "POST" })
+export const $updateCalendarCourseColor = createServerFn({ method: "POST" })
   .middleware([freshAuthMiddleware])
-  .validator(eventSchema.omit({ calendarId: true }))
+  .validator(selectionSchema.extend({ color: z.string().regex(/^#[0-9a-f]{6}$/i) }))
   .handler(async ({ data, context }) => {
-    const result = await createCourseEvent(context.user.id, data);
-    if (result.isErr()) throw result.error;
-    return result.value;
-  });
-
-export const $createCalendarEvent = createServerFn({ method: "POST" })
-  .middleware([freshAuthMiddleware])
-  .validator(eventSchema)
-  .handler(async ({ data, context }) => {
-    if (!data.calendarId) throw new Error("Calendar is required");
-    const result = await createCalendarEvent(context.user.id, data.calendarId, data);
-    if (result.isErr()) throw result.error;
-    return result.value;
-  });
-
-export const $listCalendarEvents = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
-  .validator(z.object({ calendarId: calendarIdSchema, semester: semesterSchema }))
-  .handler(async ({ data, context }) => {
-    const [personal, shared] = await Promise.all([
-      listCalendarEvents(context.user.id, data.calendarId, data.semester),
-      listSubscribedCourseEvents(context.user.id, data.calendarId, data.semester),
-    ]);
-    if (personal.isErr()) throw personal.error;
-    if (shared.isErr()) throw shared.error;
-    return [...personal.value, ...shared.value];
-  });
-
-export const $updateGlobalEventsSubscription = createServerFn({ method: "POST" })
-  .middleware([freshAuthMiddleware])
-  .validator(selectionSchema.extend({ subscribed: z.boolean() }))
-  .handler(async ({ data, context }) => {
-    const result = await updateGlobalEventsSubscription(
+    const result = await updateCalendarCourseColor(
       context.user.id,
       data.calendarId,
       data,
-      data.subscribed,
+      data.color,
     );
     if (result.isErr()) throw result.error;
-    return result.value.length > 0;
+    return result.value;
   });
 
 export const $updateExcludedSeries = createServerFn({ method: "POST" })

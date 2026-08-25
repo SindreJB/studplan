@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/d1";
 
 import { relations, authRelations, courseRelations } from "./schema";
 
+// SAFETY: Cloudflare provides the D1 binding in the worker environment.
 const bindings = env as { DB: D1Database };
 
 export const db = drizzle(bindings.DB, {

@@ -13,18 +13,16 @@
     "./components/*": "./components/*.tsx"
   },
   "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "ui": "vpx shadcn@latest"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
     "class-variance-authority": "catalog:",
     "cnfast": "catalog:",
-    "date-fns": "catalog:",
     "lucide-react": "catalog:",
-    "motion": "catalog:",
     "shadcn": "catalog:",
-    "tw-animate-css": "catalog:",
-    "zod": "catalog:"
+    "tw-animate-css": "catalog:"
   },
   "devDependencies": {
     "@repo/tsconfig": "workspace:*",

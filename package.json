@@ -7,6 +7,7 @@
     "build:web": "vp run web#build",
     "dev": "vp dev",
     "dev:web": "vp -C apps/web dev",
+    "typecheck": "vp run --recursive typecheck",
     "lint": "vp lint --type-aware --type-check",
     "lint:fix": "vp lint --type-aware --type-check --fix",
     "test": "vp test",
@@ -17,6 +18,7 @@
     "prepare": "vp config",
     "deps": "vpx taze@latest -Ilwr --maturity-period 3",
     "fallow": "vpx fallow@latest --skip health",
+    "doctor": "vpx react-doctor@latest --project apps/web,packages/ui",
     "tanstack": "vpx @tanstack/cli@latest",
     "db": "vp run --filter=@repo/db db",
     "ui": "vp run --filter=@repo/ui ui",
@@ -32,6 +34,7 @@
     "intent": "vpx @tanstack/intent@latest"
   },
   "devDependencies": {
+    "@oxlint/plugins": "catalog:",
     "@tanstack/eslint-plugin-query": "catalog:",
     "@tanstack/eslint-plugin-router": "catalog:",
     "vite-plus": "catalog:",

@@ -18,8 +18,14 @@ import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as GuestResetPasswordRouteImport } from './routes/_guest/reset-password'
 import { Route as GuestSignupRouteImport } from './routes/_guest/signup'
 import { Route as AuthAppIndexRouteImport } from './routes/_auth/app/index'
+import { Route as AuthAppCalendarIdRouteRouteImport } from './routes/_auth/app/$calendarId/route'
+import { Route as AuthAppNewRouteImport } from './routes/_auth/app/new'
+import { Route as AuthAppSettingsRouteImport } from './routes/_auth/app/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as CalendarsCalendarIdChar123feedChar125DoticsRouteImport } from './routes/calendars/$calendarId/{$feed}[.]ics'
+import { Route as AuthAppCalendarIdIndexRouteImport } from './routes/_auth/app/$calendarId/index'
+import { Route as AuthAppCalendarIdScheduleRouteImport } from './routes/_auth/app/$calendarId/schedule'
+import { Route as AuthAppCalendarIdSettingsRouteImport } from './routes/_auth/app/$calendarId/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +70,21 @@ const AuthAppIndexRoute = AuthAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthAppRouteRoute,
 } as any)
+const AuthAppCalendarIdRouteRoute = AuthAppCalendarIdRouteRouteImport.update({
+  id: '/$calendarId',
+  path: '/$calendarId',
+  getParentRoute: () => AuthAppRouteRoute,
+} as any)
+const AuthAppNewRoute = AuthAppNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthAppRouteRoute,
+} as any)
+const AuthAppSettingsRoute = AuthAppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthAppRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -75,6 +96,23 @@ const CalendarsCalendarIdChar123feedChar125DoticsRoute =
     path: '/calendars/$calendarId/{$feed}.ics',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthAppCalendarIdIndexRoute = AuthAppCalendarIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthAppCalendarIdRouteRoute,
+} as any)
+const AuthAppCalendarIdScheduleRoute =
+  AuthAppCalendarIdScheduleRouteImport.update({
+    id: '/schedule',
+    path: '/schedule',
+    getParentRoute: () => AuthAppCalendarIdRouteRoute,
+  } as any)
+const AuthAppCalendarIdSettingsRoute =
+  AuthAppCalendarIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthAppCalendarIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,9 +121,15 @@ export interface FileRoutesByFullPath {
   '/login': typeof GuestLoginRoute
   '/reset-password': typeof GuestResetPasswordRoute
   '/signup': typeof GuestSignupRoute
+  '/app/$calendarId': typeof AuthAppCalendarIdRouteRouteWithChildren
+  '/app/new': typeof AuthAppNewRoute
+  '/app/settings': typeof AuthAppSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/calendars/$calendarId/{$feed}.ics': typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
   '/app/': typeof AuthAppIndexRoute
+  '/app/$calendarId/schedule': typeof AuthAppCalendarIdScheduleRoute
+  '/app/$calendarId/settings': typeof AuthAppCalendarIdSettingsRoute
+  '/app/$calendarId/': typeof AuthAppCalendarIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,9 +137,14 @@ export interface FileRoutesByTo {
   '/login': typeof GuestLoginRoute
   '/reset-password': typeof GuestResetPasswordRoute
   '/signup': typeof GuestSignupRoute
+  '/app/new': typeof AuthAppNewRoute
+  '/app/settings': typeof AuthAppSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/calendars/$calendarId/{$feed}.ics': typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
   '/app': typeof AuthAppIndexRoute
+  '/app/$calendarId/schedule': typeof AuthAppCalendarIdScheduleRoute
+  '/app/$calendarId/settings': typeof AuthAppCalendarIdSettingsRoute
+  '/app/$calendarId': typeof AuthAppCalendarIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,9 +156,15 @@ export interface FileRoutesById {
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/reset-password': typeof GuestResetPasswordRoute
   '/_guest/signup': typeof GuestSignupRoute
+  '/_auth/app/$calendarId': typeof AuthAppCalendarIdRouteRouteWithChildren
+  '/_auth/app/new': typeof AuthAppNewRoute
+  '/_auth/app/settings': typeof AuthAppSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/calendars/$calendarId/{$feed}.ics': typeof CalendarsCalendarIdChar123feedChar125DoticsRoute
   '/_auth/app/': typeof AuthAppIndexRoute
+  '/_auth/app/$calendarId/schedule': typeof AuthAppCalendarIdScheduleRoute
+  '/_auth/app/$calendarId/settings': typeof AuthAppCalendarIdSettingsRoute
+  '/_auth/app/$calendarId/': typeof AuthAppCalendarIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,9 +175,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/app/$calendarId'
+    | '/app/new'
+    | '/app/settings'
     | '/api/auth/$'
     | '/calendars/$calendarId/{$feed}.ics'
     | '/app/'
+    | '/app/$calendarId/schedule'
+    | '/app/$calendarId/settings'
+    | '/app/$calendarId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,9 +191,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/app/new'
+    | '/app/settings'
     | '/api/auth/$'
     | '/calendars/$calendarId/{$feed}.ics'
     | '/app'
+    | '/app/$calendarId/schedule'
+    | '/app/$calendarId/settings'
+    | '/app/$calendarId'
   id:
     | '__root__'
     | '/'
@@ -143,9 +209,15 @@ export interface FileRouteTypes {
     | '/_guest/login'
     | '/_guest/reset-password'
     | '/_guest/signup'
+    | '/_auth/app/$calendarId'
+    | '/_auth/app/new'
+    | '/_auth/app/settings'
     | '/api/auth/$'
     | '/calendars/$calendarId/{$feed}.ics'
     | '/_auth/app/'
+    | '/_auth/app/$calendarId/schedule'
+    | '/_auth/app/$calendarId/settings'
+    | '/_auth/app/$calendarId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,6 +293,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAppIndexRouteImport
       parentRoute: typeof AuthAppRouteRoute
     }
+    '/_auth/app/$calendarId': {
+      id: '/_auth/app/$calendarId'
+      path: '/$calendarId'
+      fullPath: '/app/$calendarId'
+      preLoaderRoute: typeof AuthAppCalendarIdRouteRouteImport
+      parentRoute: typeof AuthAppRouteRoute
+    }
+    '/_auth/app/new': {
+      id: '/_auth/app/new'
+      path: '/new'
+      fullPath: '/app/new'
+      preLoaderRoute: typeof AuthAppNewRouteImport
+      parentRoute: typeof AuthAppRouteRoute
+    }
+    '/_auth/app/settings': {
+      id: '/_auth/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AuthAppSettingsRouteImport
+      parentRoute: typeof AuthAppRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -235,14 +328,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalendarsCalendarIdChar123feedChar125DoticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/app/$calendarId/': {
+      id: '/_auth/app/$calendarId/'
+      path: '/'
+      fullPath: '/app/$calendarId/'
+      preLoaderRoute: typeof AuthAppCalendarIdIndexRouteImport
+      parentRoute: typeof AuthAppCalendarIdRouteRoute
+    }
+    '/_auth/app/$calendarId/schedule': {
+      id: '/_auth/app/$calendarId/schedule'
+      path: '/schedule'
+      fullPath: '/app/$calendarId/schedule'
+      preLoaderRoute: typeof AuthAppCalendarIdScheduleRouteImport
+      parentRoute: typeof AuthAppCalendarIdRouteRoute
+    }
+    '/_auth/app/$calendarId/settings': {
+      id: '/_auth/app/$calendarId/settings'
+      path: '/settings'
+      fullPath: '/app/$calendarId/settings'
+      preLoaderRoute: typeof AuthAppCalendarIdSettingsRouteImport
+      parentRoute: typeof AuthAppCalendarIdRouteRoute
+    }
   }
 }
 
+interface AuthAppCalendarIdRouteRouteChildren {
+  AuthAppCalendarIdScheduleRoute: typeof AuthAppCalendarIdScheduleRoute
+  AuthAppCalendarIdSettingsRoute: typeof AuthAppCalendarIdSettingsRoute
+  AuthAppCalendarIdIndexRoute: typeof AuthAppCalendarIdIndexRoute
+}
+
+const AuthAppCalendarIdRouteRouteChildren: AuthAppCalendarIdRouteRouteChildren =
+  {
+    AuthAppCalendarIdScheduleRoute: AuthAppCalendarIdScheduleRoute,
+    AuthAppCalendarIdSettingsRoute: AuthAppCalendarIdSettingsRoute,
+    AuthAppCalendarIdIndexRoute: AuthAppCalendarIdIndexRoute,
+  }
+
+const AuthAppCalendarIdRouteRouteWithChildren =
+  AuthAppCalendarIdRouteRoute._addFileChildren(
+    AuthAppCalendarIdRouteRouteChildren,
+  )
+
 interface AuthAppRouteRouteChildren {
+  AuthAppCalendarIdRouteRoute: typeof AuthAppCalendarIdRouteRouteWithChildren
+  AuthAppNewRoute: typeof AuthAppNewRoute
+  AuthAppSettingsRoute: typeof AuthAppSettingsRoute
   AuthAppIndexRoute: typeof AuthAppIndexRoute
 }
 
 const AuthAppRouteRouteChildren: AuthAppRouteRouteChildren = {
+  AuthAppCalendarIdRouteRoute: AuthAppCalendarIdRouteRouteWithChildren,
+  AuthAppNewRoute: AuthAppNewRoute,
+  AuthAppSettingsRoute: AuthAppSettingsRoute,
   AuthAppIndexRoute: AuthAppIndexRoute,
 }
 

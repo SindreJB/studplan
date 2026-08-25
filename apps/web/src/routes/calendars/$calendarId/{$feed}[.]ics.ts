@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getCalendarIcal, type CalendarFeed } from "#/lib/calendar-feed.server.ts";
+import { getCalendarIcal, type CalendarFeed } from "#/lib/calendar-feed.server";
 
 export const Route = createFileRoute("/calendars/$calendarId/{$feed}.ics")({
   server: {

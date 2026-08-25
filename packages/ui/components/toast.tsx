@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import { Button } from "#/components/button.tsx";
-import { cn } from "#/lib/utils.ts";
+import { Button } from "../components/button";
+import { cn } from "../lib/utils";
 
 const toast = ToastPrimitive.createToastManager();
 

@@ -1,12 +1,13 @@
 {
   // https://docs.fallow.tools/configuration/overview
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "entry": ["apps/web/src/router.tsx", "scripts/*.ts"],
+  "entry": ["apps/web/src/router.tsx", "packages/auth/auth.generate.ts", "scripts/*.ts"],
   "workspaces": {
-    "packages": ["apps/*", "packages/*", "tools/*"],
+    "packages": ["apps/*", "packages/*"],
   },
-  "ignorePatterns": ["**/*.generated.ts", "**/*.d.ts", "**/*.gen.*"],
+  "ignorePatterns": ["**/*.generated.ts", "**/*.d.ts", "**/*.gen.*", "tools/oxlint/**"],
   "ignoreDependencies": [
+    "@oxlint/plugins",
     "@types/node",
     "babel-plugin-react-compiler",
     "@tanstack/eslint-plugin-query",

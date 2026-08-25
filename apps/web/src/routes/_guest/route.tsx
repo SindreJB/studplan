@@ -13,9 +13,7 @@ export const Route = createFileRoute("/_guest")({
       revalidateIfStale: true,
     });
     if (user) {
-      throw redirect({
-        to: REDIRECT_URL,
-      });
+      throw redirect({ to: REDIRECT_URL });
     }
 
     return {

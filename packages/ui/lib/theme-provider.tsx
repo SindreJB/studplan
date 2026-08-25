@@ -1,5 +1,5 @@
 import { ScriptOnce } from "@tanstack/react-router";
-import { createContext, use, useEffect, useState } from "react";
+import { createContext, use, useCallback, useMemo, useSyncExternalStore } from "react";
 
 type Theme = "dark" | "light";
 
@@ -12,6 +12,8 @@ type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
 };
+
+const THEME_EVENT = "theme-change";
 
 function getThemeScript(storageKey: string) {
   const key = JSON.stringify(storageKey);
@@ -30,10 +32,7 @@ function getThemeScript(storageKey: string) {
 })();`;
 }
 
-const ThemeProviderContext = createContext<ThemeProviderState>({
-  theme: "light",
-  setTheme: () => {},
-});
+const ThemeProviderContext = createContext<ThemeProviderState | null>(null);
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
@@ -43,35 +42,31 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children, storageKey = "theme" }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
+  const subscribe = useCallback((callback: () => void) => {
+    window.addEventListener(THEME_EVENT, callback);
+    window.addEventListener("storage", callback);
+    return () => {
+      window.removeEventListener(THEME_EVENT, callback);
+      window.removeEventListener("storage", callback);
+    };
+  }, []);
+  const getSnapshot = useCallback((): Theme => {
     const stored = localStorage.getItem(storageKey);
-    const initial =
-      stored === "light" || stored === "dark"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-
-    localStorage.setItem(storageKey, initial);
-    // oxlint-disable-next-line react/react-compiler
-    setThemeState(initial);
-    setMounted(true);
+    return stored === "dark" ? "dark" : "light";
   }, [storageKey]);
-
-  useEffect(() => {
-    if (mounted) applyTheme(theme);
-  }, [theme, mounted]);
-
-  const setTheme = (next: Theme) => {
-    localStorage.setItem(storageKey, next);
-    setThemeState(next);
-  };
+  const theme = useSyncExternalStore<Theme>(subscribe, getSnapshot, () => "light");
+  const setTheme = useCallback(
+    (next: Theme) => {
+      localStorage.setItem(storageKey, next);
+      applyTheme(next);
+      window.dispatchEvent(new Event(THEME_EVENT));
+    },
+    [storageKey],
+  );
+  const context = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
 
   return (
-    <ThemeProviderContext value={{ theme, setTheme }}>
+    <ThemeProviderContext value={context}>
       <ScriptOnce>{getThemeScript(storageKey)}</ScriptOnce>
       {children}
     </ThemeProviderContext>
@@ -80,8 +75,6 @@ export function ThemeProvider({ children, storageKey = "theme" }: ThemeProviderP
 
 export function useTheme() {
   const context = use(ThemeProviderContext);
-
-  if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
-
+  if (!context) throw new Error("useTheme must be used within a ThemeProvider");
   return context;
 }

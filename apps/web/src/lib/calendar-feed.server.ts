@@ -1,15 +1,14 @@
 import { db } from "@repo/db";
-import { schema } from "@repo/db/schema";
 import { Result } from "better-result";
-import { and, eq } from "drizzle-orm";
 
-import { includeCourseEvent } from "./course-event-filter.ts";
-import { CourseSyncError } from "./course-sync.server.ts";
-import { createIcal } from "./ical.ts";
-
-const { calendarCourse, calendarEvent, courseEvent } = schema;
+import { includeCourseEvent } from "./course-event-filter";
+import { CourseSyncError } from "./course-sync.server";
+import { createIcal } from "./ical";
 
 export type CalendarFeed = "unfiltered" | "filtered" | { courseId: string };
+
+const isCourseFeed = (feed: CalendarFeed): feed is { courseId: string } =>
+  feed !== "unfiltered" && feed !== "filtered";
 
 export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
   return Result.gen(async function* () {
@@ -49,43 +48,9 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
       return [{ ...course, catalog: course.catalog.courses, events: course.schedule.events }];
     });
 
-    const customRows = await Promise.all([
-      db
-        .select({ event: calendarEvent })
-        .from(calendarEvent)
-        .where(eq(calendarEvent.calendarId, calendarId)),
-      db
-        .select({ event: courseEvent })
-        .from(courseEvent)
-        .innerJoin(
-          calendarCourse,
-          and(
-            eq(calendarCourse.calendarId, calendarId),
-            eq(calendarCourse.semester, courseEvent.semester),
-            eq(calendarCourse.courseId, courseEvent.courseId),
-            eq(calendarCourse.term, courseEvent.term),
-            eq(calendarCourse.globalEventsSubscribed, true),
-          ),
-        ),
-    ]);
-    const customEvents = [
-      ...customRows[0].map(({ event }) => event),
-      ...customRows[1].map(({ event }) => event),
-    ]
-      .filter((event) => typeof feed !== "object" || event.courseId === feed.courseId)
-      .filter((event) => event.courseId !== null)
-      .map((event) => ({
-        uid: `${calendarId}-${event.id}@studplan.ahse.dev`,
-        startsAt: event.startsAt.getTime(),
-        endsAt: event.endsAt.getTime(),
-        summary: `${event.courseId} · ${event.title}`,
-        description: event.description ?? undefined,
-        location: event.location ?? undefined,
-      }));
-
     const events = [
       ...rows.flatMap((row) => {
-        if (typeof feed === "object" && row.courseId !== feed.courseId) return [];
+        if (isCourseFeed(feed) && row.courseId !== feed.courseId) return [];
 
         const course = row.catalog.find(
           (item) => item.id === row.courseId && item.term === row.term,
@@ -106,10 +71,9 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
             .join("; "),
         }));
       }),
-      ...customEvents,
     ];
 
-    const suffix = typeof feed === "object" ? ` · ${feed.courseId}` : ` · ${feed}`;
+    const suffix = isCourseFeed(feed) ? ` · ${feed.courseId}` : ` · ${feed}`;
     return Result.ok(createIcal(`${selectedCalendar.name}${suffix}`, events));
   });
 }

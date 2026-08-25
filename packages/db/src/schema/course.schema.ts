@@ -29,6 +29,7 @@ export const calendar = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    semester: text("semester").default("26h").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
   (table) => [index("calendar_user_idx").on(table.userId)],
@@ -43,12 +44,10 @@ export const calendarCourse = sqliteTable(
     semester: text("semester").notNull(),
     courseId: text("course_id").notNull(),
     term: integer("term").notNull(),
+    color: text("color").default("#6366f1").notNull(),
     excludedSourceIds: text("excluded_source_ids", { mode: "json" })
       .$type<string[]>()
       .default([])
-      .notNull(),
-    globalEventsSubscribed: integer("global_events_subscribed", { mode: "boolean" })
-      .default(false)
       .notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
@@ -89,48 +88,6 @@ export interface CourseScheduleEvent {
   }>;
 }
 
-export const courseEvent = sqliteTable(
-  "course_event",
-  {
-    id: text("id").primaryKey(),
-    semester: text("semester").notNull(),
-    courseId: text("course_id").notNull(),
-    term: integer("term").notNull(),
-    creatorId: text("creator_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    title: text("title").notNull(),
-    description: text("description"),
-    startsAt: integer("starts_at", { mode: "timestamp_ms" }).notNull(),
-    endsAt: integer("ends_at", { mode: "timestamp_ms" }).notNull(),
-    location: text("location"),
-    link: text("link"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-  },
-  (table) => [index("course_event_course_idx").on(table.semester, table.courseId, table.term)],
-);
-
-export const calendarEvent = sqliteTable(
-  "calendar_event",
-  {
-    id: text("id").primaryKey(),
-    calendarId: text("calendar_id")
-      .notNull()
-      .references(() => calendar.id, { onDelete: "cascade" }),
-    semester: text("semester").notNull(),
-    courseId: text("course_id"),
-    term: integer("term"),
-    title: text("title").notNull(),
-    description: text("description"),
-    startsAt: integer("starts_at", { mode: "timestamp_ms" }).notNull(),
-    endsAt: integer("ends_at", { mode: "timestamp_ms" }).notNull(),
-    location: text("location"),
-    link: text("link"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-  },
-  (table) => [index("calendar_event_calendar_idx").on(table.calendarId, table.semester)],
-);
-
 export const courseSchedule = sqliteTable(
   "course_schedule",
   {
@@ -144,7 +101,7 @@ export const courseSchedule = sqliteTable(
 );
 
 export const courseRelations = defineRelationsPart(
-  { user, calendar, calendarCourse, calendarEvent, courseCatalog, courseEvent, courseSchedule },
+  { user, calendar, calendarCourse, courseCatalog, courseSchedule },
   (r) => ({
     calendar: {
       user: r.one.user({ from: r.calendar.userId, to: r.user.id }),
@@ -152,7 +109,6 @@ export const courseRelations = defineRelationsPart(
         from: r.calendar.id,
         to: r.calendarCourse.calendarId,
       }),
-      events: r.many.calendarEvent({ from: r.calendar.id, to: r.calendarEvent.calendarId }),
     },
     calendarCourse: {
       calendar: r.one.calendar({
@@ -166,15 +122,6 @@ export const courseRelations = defineRelationsPart(
       schedule: r.one.courseSchedule({
         from: [r.calendarCourse.semester, r.calendarCourse.courseId, r.calendarCourse.term],
         to: [r.courseSchedule.semester, r.courseSchedule.courseId, r.courseSchedule.term],
-      }),
-    },
-    courseEvent: {
-      creator: r.one.user({ from: r.courseEvent.creatorId, to: r.user.id }),
-    },
-    calendarEvent: {
-      calendar: r.one.calendar({
-        from: r.calendarEvent.calendarId,
-        to: r.calendar.id,
       }),
     },
   }),

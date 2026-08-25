@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createIcal } from "./ical.ts";
+import { createIcal } from "./ical";
 
 test("creates an escaped UTC iCalendar feed", () => {
   const ical = createIcal("My, calendar", [

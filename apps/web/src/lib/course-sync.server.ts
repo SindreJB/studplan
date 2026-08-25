@@ -2,18 +2,18 @@ import { db } from "@repo/db";
 import { schema, type CourseScheduleEvent } from "@repo/db/schema";
 import { Result, TaggedError } from "better-result";
 import { and, eq, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
-import { includeCourseEvent } from "./course-event-filter.ts";
+import { includeCourseEvent } from "./course-event-filter";
 import {
   getCourseSchedule,
   getCourses,
   type CourseSelection,
   type Schedule,
   type TpApiError,
-} from "./tp.server.ts";
+} from "./tp.server";
 
-const { calendar, calendarCourse, calendarEvent, courseCatalog, courseEvent, courseSchedule } =
-  schema;
+const { calendar, calendarCourse, courseCatalog, courseSchedule } = schema;
 
 const TP_BATCH_SIZE = 20;
 
@@ -23,7 +23,7 @@ export class CourseSyncError extends TaggedError("CourseSyncError")<{
   cause: unknown;
 }> {}
 
-export class CourseNotFoundError extends TaggedError("CourseNotFoundError")<{
+class CourseNotFoundError extends TaggedError("CourseNotFoundError")<{
   semester: string;
   courseId: string;
   term: number;
@@ -31,7 +31,7 @@ export class CourseNotFoundError extends TaggedError("CourseNotFoundError")<{
 }> {}
 
 export type Selection = CourseSelection & { semester: string };
-export type SyncFailure = {
+type SyncFailure = {
   selections: readonly Selection[];
   error: TpApiError | CourseSyncError;
 };
@@ -166,7 +166,7 @@ function syncCourseScheduleBatch(semester: string, selections: readonly Selectio
   });
 }
 
-export async function syncCourseSchedules(selections: readonly Selection[]) {
+async function syncCourseSchedules(selections: readonly Selection[]) {
   const failures: SyncFailure[] = [];
   const bySemester = new Map<string, Selection[]>();
   for (const selection of selections) {
@@ -178,6 +178,7 @@ export async function syncCourseSchedules(selections: readonly Selection[]) {
 
   for (const [semester, semesterSelections] of bySemester) {
     for (const batch of chunks(semesterSelections, TP_BATCH_SIZE)) {
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop -- serialize API batches to avoid rate limits
       const result = await syncCourseScheduleBatch(semester, batch);
 
       if (result.isErr()) {
@@ -239,7 +240,7 @@ export function listCalendars(userId: string) {
   return Result.tryPromise({
     try: () =>
       db
-        .select({ id: calendar.id, name: calendar.name })
+        .select({ id: calendar.id, name: calendar.name, semester: calendar.semester })
         .from(calendar)
         .where(eq(calendar.userId, userId)),
     catch: (cause) => databaseError("read", cause),
@@ -255,8 +256,8 @@ export function listCalendarCourses(userId: string, calendarId: string, semester
             .select({
               id: calendarCourse.courseId,
               term: calendarCourse.term,
+              color: calendarCourse.color,
               excludedSourceIds: calendarCourse.excludedSourceIds,
-              globalEventsSubscribed: calendarCourse.globalEventsSubscribed,
               events: courseSchedule.events,
             })
             .from(calendarCourse)
@@ -302,11 +303,11 @@ export function listCalendarCourses(userId: string, calendarId: string, semester
   });
 }
 
-export function updateExcludedSeries(
+function updateCalendarCourse(
   userId: string,
   calendarId: string,
   selection: Selection,
-  excludedSourceIds: string[],
+  values: Partial<Pick<typeof calendarCourse.$inferInsert, "color" | "excludedSourceIds">>,
 ) {
   return Result.gen(async function* () {
     const owned = yield* Result.await(
@@ -327,7 +328,7 @@ export function updateExcludedSeries(
         try: () =>
           db
             .update(calendarCourse)
-            .set({ excludedSourceIds })
+            .set(values)
             .where(
               and(
                 eq(calendarCourse.calendarId, calendarId),
@@ -342,6 +343,24 @@ export function updateExcludedSeries(
     );
     return Result.ok(updated.length > 0);
   });
+}
+
+export function updateExcludedSeries(
+  userId: string,
+  calendarId: string,
+  selection: Selection,
+  excludedSourceIds: string[],
+) {
+  return updateCalendarCourse(userId, calendarId, selection, { excludedSourceIds });
+}
+
+export function updateCalendarCourseColor(
+  userId: string,
+  calendarId: string,
+  selection: Selection,
+  color: string,
+) {
+  return updateCalendarCourse(userId, calendarId, selection, { color });
 }
 
 export function removeCalendarCourse(userId: string, calendarId: string, selection: Selection) {
@@ -391,162 +410,39 @@ export function deleteCalendar(userId: string, calendarId: string) {
   });
 }
 
-export function createCalendar(userId: string, name: string) {
+export function createCalendar(userId: string, name: string, semester: string) {
   return Result.tryPromise({
     try: async () => {
       const [created] = await db
         .insert(calendar)
-        .values({ id: crypto.randomUUID(), userId, name })
-        .returning({ id: calendar.id, name: calendar.name });
+        .values({ id: nanoid(10), userId, name, semester })
+        .returning({ id: calendar.id, name: calendar.name, semester: calendar.semester });
       return created;
     },
     catch: (cause) => databaseError("write", cause),
   });
 }
 
-export function createDemoCalendar(userId: string, semester: string) {
-  const courseIds = [
-    "IDATG2901",
-    "IDATT2101",
-    "IDATT2506",
-    "IIK3100",
-    "IMAT3011",
-    "INGT1002",
-    "TDT4172",
-  ];
-
-  return Result.gen(async function* () {
-    const created = yield* Result.await(createCalendar(userId, "Demo calendar"));
-    if (!created) return Result.err(databaseError("write", new Error("Calendar was not created")));
-
-    for (const id of courseIds) {
-      yield* Result.await(addCalendarCourse(userId, created.id, { semester, id, term: 1 }));
-    }
-    return Result.ok(created);
-  });
-}
-
-export type EventInput = {
-  semester: string;
-  courseId: string;
-  term: number;
-  title: string;
-  description?: string;
-  startsAt: Date;
-  endsAt: Date;
-  location?: string;
-  link?: string;
-};
-
-export function createCourseEvent(userId: string, input: EventInput) {
-  return Result.tryPromise({
-    try: () =>
-      db
-        .insert(courseEvent)
-        .values({ id: crypto.randomUUID(), creatorId: userId, ...input })
-        .returning(),
-    catch: (cause) => databaseError("write", cause),
-  });
-}
-
-export function createCalendarEvent(userId: string, calendarId: string, input: EventInput) {
-  return Result.gen(async function* () {
-    const owned = yield* Result.await(
-      Result.tryPromise({
-        try: () =>
-          db
-            .select({ id: calendar.id })
-            .from(calendar)
-            .where(and(eq(calendar.id, calendarId), eq(calendar.userId, userId)))
-            .limit(1),
-        catch: (cause) => databaseError("read", cause),
-      }),
-    );
-    if (!owned[0]) return Result.ok([]);
-    const created = yield* Result.await(
-      Result.tryPromise({
-        try: () =>
-          db
-            .insert(calendarEvent)
-            .values({ id: crypto.randomUUID(), calendarId, ...input })
-            .returning(),
-        catch: (cause) => databaseError("write", cause),
-      }),
-    );
-    return Result.ok(created);
-  });
-}
-
-export function updateGlobalEventsSubscription(
-  userId: string,
-  calendarId: string,
-  selection: Selection,
-  subscribed: boolean,
-) {
-  return Result.tryPromise({
-    try: () =>
-      db
-        .update(calendarCourse)
-        .set({ globalEventsSubscribed: subscribed })
-        .where(
-          and(
-            eq(calendarCourse.calendarId, calendarId),
-            eq(calendarCourse.semester, selection.semester),
-            eq(calendarCourse.courseId, selection.id),
-            eq(calendarCourse.term, selection.term),
-            sql`EXISTS (SELECT 1 FROM calendar WHERE calendar.id = ${calendarId} AND calendar.user_id = ${userId})`,
-          ),
-        )
-        .returning({ calendarId: calendarCourse.calendarId }),
-    catch: (cause) => databaseError("write", cause),
-  });
-}
-
-export function listCalendarEvents(userId: string, calendarId: string, semester: string) {
+export function updateCalendarSemester(userId: string, calendarId: string, semester: string) {
   return Result.tryPromise({
     try: async () => {
-      const rows = await db
-        .select({ event: calendarEvent })
-        .from(calendarEvent)
-        .innerJoin(calendar, eq(calendar.id, calendarEvent.calendarId))
-        .where(
-          and(
-            eq(calendar.userId, userId),
-            eq(calendar.id, calendarId),
-            eq(calendarEvent.semester, semester),
-          ),
-        );
-      return rows.map(({ event }) => event);
-    },
-    catch: (cause) => databaseError("read", cause),
-  });
-}
+      const owned = await db
+        .select({ id: calendar.id })
+        .from(calendar)
+        .where(and(eq(calendar.id, calendarId), eq(calendar.userId, userId)))
+        .limit(1);
+      if (!owned[0]) return false;
 
-export function listSubscribedCourseEvents(userId: string, calendarId: string, semester: string) {
-  return Result.tryPromise({
-    try: () =>
-      db
-        .select({ event: courseEvent })
-        .from(courseEvent)
-        .innerJoin(
-          calendarCourse,
-          and(
-            eq(calendarCourse.semester, courseEvent.semester),
-            eq(calendarCourse.courseId, courseEvent.courseId),
-            eq(calendarCourse.term, courseEvent.term),
-            eq(calendarCourse.globalEventsSubscribed, true),
-          ),
-        )
-        .innerJoin(calendar, eq(calendar.id, calendarCourse.calendarId))
-        .where(
-          and(
-            eq(calendar.userId, userId),
-            eq(calendar.id, calendarId),
-            eq(courseEvent.semester, semester),
-          ),
-        )
-        .then((rows) => rows.map(({ event }) => event)),
-    catch: (cause) => databaseError("read", cause),
+      await db.batch([
+        db.delete(calendarCourse).where(eq(calendarCourse.calendarId, calendarId)),
+        db
+          .update(calendar)
+          .set({ semester })
+          .where(and(eq(calendar.id, calendarId), eq(calendar.userId, userId))),
+      ]);
+      return true;
+    },
+    catch: (cause) => databaseError("write", cause),
   });
 }
 
@@ -560,7 +456,6 @@ export function listCalendarSchedule(userId: string, calendarId: string, semeste
               courseId: courseSchedule.courseId,
               term: courseSchedule.term,
               excludedSourceIds: calendarCourse.excludedSourceIds,
-              globalEventsSubscribed: calendarCourse.globalEventsSubscribed,
               events: courseSchedule.events,
             })
             .from(courseSchedule)
@@ -584,47 +479,20 @@ export function listCalendarSchedule(userId: string, calendarId: string, semeste
       }),
     );
 
-    const events = new Map(
-      schedules
-        .flatMap(({ courseId, term, excludedSourceIds, events }) =>
-          events
-            .filter((event) => includeCourseEvent(event, excludedSourceIds))
-            .map((event) => ({ ...event, courseId, term })),
-        )
-        .map((event) => [event.eventId, event]),
-    );
-    const personal = yield* Result.await(listCalendarEvents(userId, calendarId, semester));
-    const shared = yield* Result.await(listSubscribedCourseEvents(userId, calendarId, semester));
-    for (const event of [...personal, ...shared]) {
-      if (event.courseId === null || event.term === null) continue;
-      const room = event.location
-        ? [
-            {
-              id: event.id,
-              roomId: event.id,
-              roomName: event.location,
-              roomUrl: "",
-              campusId: "",
-              buildingId: "",
-              buildingName: "",
-              buildingAcronym: "",
-            },
-          ]
-        : [];
-      events.set(event.id, {
-        eventId: event.id,
-        sourceId: event.id,
-        week: 0,
-        startsAt: event.startsAt.getTime(),
-        endsAt: event.endsAt.getTime(),
-        summary: event.title,
-        compulsory: false,
-        campusId: null,
-        staffs: [],
-        rooms: room,
-        courseId: event.courseId,
-        term: event.term,
-      });
+    const events = new Map<
+      string,
+      (typeof schedules)[number]["events"][number] & { courseId: string; term: number }
+    >();
+    for (const schedule of schedules) {
+      for (const event of schedule.events) {
+        if (includeCourseEvent(event, schedule.excludedSourceIds)) {
+          events.set(event.eventId, {
+            ...event,
+            courseId: schedule.courseId,
+            term: schedule.term,
+          });
+        }
+      }
     }
     return Result.ok([...events.values()].sort((left, right) => left.startsAt - right.startsAt));
   });
@@ -674,6 +542,11 @@ function readCourseState(selection: Selection) {
   });
 }
 
+function randomColor() {
+  const bytes = crypto.getRandomValues(new Uint8Array(3));
+  return `#${[...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+}
+
 function insertCalendarCourse(userId: string, calendarId: string, selection: Selection) {
   return Result.tryPromise({
     try: async () => {
@@ -691,6 +564,7 @@ function insertCalendarCourse(userId: string, calendarId: string, selection: Sel
           semester: selection.semester,
           courseId: selection.id,
           term: selection.term,
+          color: randomColor(),
         })
         .onConflictDoNothing()
         .returning({ calendarId: calendarCourse.calendarId });

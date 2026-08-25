@@ -34,13 +34,6 @@ const courseSchema = z.object({
   ...localizedNameSchema,
 });
 
-const campusSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  owner: z.string().nullable(),
-  subcampus: z.array(z.object({ id: z.string(), name: z.string() })),
-});
-
 const roomSchema = z.object({
   id: z.string(),
   roomid: z.string(),
@@ -86,8 +79,6 @@ const eventSchema = z.object({
 
 const scheduleSchema = z.object({ events: z.array(eventSchema) });
 
-export type Course = z.infer<typeof courseSchema>;
-export type Campus = z.infer<typeof campusSchema>;
 export type Schedule = z.infer<typeof scheduleSchema>;
 export type CourseSelection = { id: string; term: number };
 
@@ -126,7 +117,7 @@ const getJson = async <Schema extends z.ZodType>(
   }
 
   const jsonResult = await Result.tryPromise({
-    try: () => response.json() as Promise<unknown>,
+    try: () => response.json(),
     catch: (cause) =>
       new TpApiError({
         kind: "json",
@@ -158,9 +149,6 @@ export const getCourses = (semester: string, signal?: AbortSignal) =>
     new URLSearchParams({ type: "course", sem: semester }),
     signal,
   );
-
-export const getCampuses = (signal?: AbortSignal) =>
-  getJson("ws/room/2.0/campus.php", z.array(campusSchema), undefined, signal);
 
 export const getCourseSchedule = async (
   semester: string,

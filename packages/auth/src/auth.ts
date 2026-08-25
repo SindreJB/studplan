@@ -7,6 +7,7 @@ import { betterAuth } from "better-auth/minimal";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { env } from "cloudflare:workers";
 
+// SAFETY: Cloudflare provides these bindings in the worker environment.
 const bindings = env as {
   APP_URL: string;
   BETTER_AUTH_SECRET: string;
@@ -36,6 +37,10 @@ export const createAuth = () =>
       },
     },
 
+    user: {
+      deleteUser: { enabled: true },
+    },
+
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
@@ -62,10 +67,14 @@ type Auth = ReturnType<typeof createAuth>;
 let instance: Auth | undefined;
 
 // Cloudflare bindings are available per request, not while Vite loads this module.
-export const auth = new Proxy({} as Auth, {
+// SAFETY: The proxy target exposes the lazily created Auth instance's contract.
+const authTarget = {} as Auth;
+export const auth = new Proxy(authTarget, {
   get(_, property) {
     instance ??= createAuth();
-    const value = Reflect.get(instance, property);
-    return typeof value === "function" ? value.bind(instance) : value;
+    if (!(property in instance)) return undefined;
+    // SAFETY: The `in` check confirms this proxy property exists on the Auth instance.
+    const value = instance[property as keyof Auth];
+    return value instanceof Function ? value.bind(instance) : value;
   },
 });

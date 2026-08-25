@@ -4,7 +4,7 @@ import {
   currentSemester,
   syncCourseCatalog,
   syncTrackedCourseSchedules,
-} from "./lib/course-sync.server.ts";
+} from "./lib/course-sync.server";
 
 const WEEKLY_CATALOG_CRON = "0 4 * * 0";
 

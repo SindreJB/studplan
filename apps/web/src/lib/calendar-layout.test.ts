@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { positionEvents } from "./calendar-layout.ts";
+import { positionEvents } from "./calendar-layout";
 
 test("overlapping events use separate columns and later events reuse free columns", () => {
   const positioned = positionEvents([

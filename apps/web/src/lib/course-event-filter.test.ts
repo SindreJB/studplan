@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { includeCourseEvent } from "./course-event-filter.ts";
+import { includeCourseEvent } from "./course-event-filter";
 
 test("course event filtering is a blacklist", () => {
   const excludedSourceIds = ["hidden-series"];

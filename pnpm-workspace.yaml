@@ -34,6 +34,7 @@ catalog:
   "@tanstack/react-router": 1.170.27
   "@tanstack/react-router-devtools": 1.167.1
   "@tanstack/react-router-ssr-query": 1.167.1
+  "@tanstack/react-virtual": 3.14.10
   "@tanstack/react-start": 1.168.44
   "@types/babel__core": 7.20.5
   "@types/node": 26.2.0
@@ -49,10 +50,7 @@ catalog:
   drizzle-kit: 1.0.0-rc.4
   drizzle-orm: 1.0.0-rc.4
   lucide-react: 1.31.0
-  motion: 13.1.0
   nanoid: 6.0.1
-  nitro: npm:nitro-nightly@3.0.1-20260810-113911-16ff2809 # https://github.com/TanStack/router/issues/8031
-  postgres: 3.4.9
   react: 19.2.8
   react-dom: 19.2.8
   shadcn: 4.17.0
@@ -67,6 +65,7 @@ catalog:
   "@cloudflare/vite-plugin": 1.51.3
   wrangler: 4.121.0
   better-result: 3.0.1
+  "@oxlint/plugins": 1.73.0
 
 catalogMode: prefer
 

@@ -30,13 +30,6 @@ export const Route = createFileRoute("/_auth")({
       throw redirect({ to: "/login" });
     }
 
-    /**
-     * If we need auth data in other loaders/beforeLoad,
-     * use `authQueryOptions` with `context.queryClient`,
-     * similar to what we already do here.
-     *
-     * Prefer this approach instead of passing user to router/loader context,
-     * for simpler centralized revalidation via TanStack Query.
-     */
+    return { user };
   },
 });

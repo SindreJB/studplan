@@ -1,44 +1,39 @@
-import { Button } from "@repo/ui/components/button";
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { Separator } from "@repo/ui/components/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@repo/ui/components/sidebar";
+import { TooltipProvider } from "@repo/ui/components/tooltip";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
-import { AddPasskeyButton } from "#/components/add-passkey-button.tsx";
-import { SignOutButton } from "#/components/sign-out-button.tsx";
-import { ThemeToggle } from "#/components/theme-toggle.tsx";
+import { AppSidebar } from "#/components/app-sidebar";
+import { ThemeToggle } from "#/components/theme-toggle";
+import { calendarsQueryOptions } from "#/lib/queries/calendars";
 
 export const Route = createFileRoute("/_auth/app")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({ ...calendarsQueryOptions(), revalidateIfStale: true }),
   component: AppLayout,
 });
 
 function AppLayout() {
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-2 px-2">
-      <div className="flex w-full max-w-7xl justify-between">
-        <div className="flex items-center gap-1">
-          <Button render={<Link to="/" />} size="sm" nativeButton={false}>
-            back to home
-          </Button>
-          <span className="rounded-md border bg-card p-1 font-mono text-xs text-card-foreground">
-            _auth/app/route.tsx
-          </span>
-        </div>
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-7xl rounded-md border p-2">
-        <Outlet />
-      </div>
+  const calendars = Route.useLoaderData();
 
-      <div className="flex w-full max-w-7xl flex-wrap justify-between gap-2 text-sm">
-        <div className="flex flex-col gap-0.5">
-          what's next? maybe a sidebar?
-          <span className="rounded-md border bg-card px-2 py-1 font-mono text-xs text-card-foreground">
-            vpr ui add sidebar
-          </span>
-        </div>
-        <div className="flex gap-2">
-          <AddPasskeyButton />
-          <SignOutButton />
-        </div>
-      </div>
-    </div>
+  return (
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppSidebar calendars={calendars} />
+        <SidebarInset>
+          <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="h-4! self-center!" />
+            <span className="text-sm font-medium">Studplan</span>
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
+          </header>
+          <main className="flex flex-1 flex-col p-4 md:p-6">
+            <Outlet />
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }

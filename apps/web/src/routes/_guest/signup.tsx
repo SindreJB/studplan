@@ -1,4 +1,4 @@
-import { authClient } from "@repo/auth/auth-client";
+import { signUpMutationOptions } from "@repo/auth/tanstack/mutations";
 import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Label } from "@repo/ui/components/label";
@@ -9,7 +9,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
 import { z } from "zod";
 
-import { FormError } from "#/components/form-error.tsx";
+import { FormError } from "#/components/form-error";
 
 const signupSchema = z
   .object({
@@ -27,8 +27,7 @@ export const Route = createFileRoute("/_guest/signup")({ component: SignupForm }
 function SignupForm() {
   const { redirectUrl } = Route.useRouteContext();
   const signup = useMutation({
-    mutationFn: ({ email, password }: z.infer<typeof signupSchema>) =>
-      authClient.signUp.email({ email, password, name: email }),
+    ...signUpMutationOptions(),
     onSuccess: ({ error }) => {
       if (error) {
         toast.add({ type: "error", description: error.message || "Sign-up failed." });
