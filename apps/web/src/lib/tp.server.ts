@@ -74,7 +74,10 @@ const eventSchema = z.object({
   teachingMethodName: z.string().nullish(),
   teachingTitle: z.string().nullish(),
   staffs: z.array(staffSchema).default([]),
-  room: z.array(roomSchema).default([]),
+  room: z
+    .array(roomSchema)
+    .nullish()
+    .transform((rooms) => rooms ?? []),
 });
 
 const scheduleSchema = z.object({ events: z.array(eventSchema) });
