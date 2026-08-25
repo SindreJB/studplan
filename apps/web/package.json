@@ -20,7 +20,6 @@
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@sentry/cloudflare": "catalog:",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",

@@ -8,8 +8,7 @@ import { ThemeToggle } from "#/components/theme-toggle";
 import { calendarsQueryOptions } from "#/lib/queries/calendars";
 
 export const Route = createFileRoute("/_auth/app")({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData({ ...calendarsQueryOptions(), revalidateIfStale: true }),
+  loader: ({ context }) => context.queryClient.fetchQuery(calendarsQueryOptions()),
   component: AppLayout,
 });
 

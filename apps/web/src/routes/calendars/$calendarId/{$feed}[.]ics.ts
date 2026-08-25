@@ -15,7 +15,17 @@ export const Route = createFileRoute("/calendars/$calendarId/{$feed}.ics")({
             ? params.feed
             : { courseId: feedName };
         const result = await getCalendarIcal(params.calendarId, feed);
-        if (result.isErr()) return new Response("Could not create calendar", { status: 500 });
+        if (result.isErr()) {
+          console.error({
+            message: "Calendar feed failed",
+            calendarId: params.calendarId,
+            feed,
+            error: result.error,
+          });
+          return new Response(`Could not create calendar: ${result.error.message}`, {
+            status: 500,
+          });
+        }
         if (result.value === null) return new Response("Calendar not found", { status: 404 });
 
         return new Response(result.value, {

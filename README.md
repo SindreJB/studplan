@@ -31,7 +31,6 @@ Put production secrets in the ignored root `.env.prod`:
 
 ```dotenv
 BETTER_AUTH_SECRET=...
-SENTRY_DSN=...
 ```
 
 Then deploy:

@@ -5,10 +5,7 @@ import { calendarsQueryOptions } from "#/lib/queries/calendars";
 
 export const Route = createFileRoute("/_auth/app/")({
   loader: async ({ context }) => {
-    const calendars = await context.queryClient.ensureQueryData({
-      ...calendarsQueryOptions(),
-      revalidateIfStale: true,
-    });
+    const calendars = await context.queryClient.fetchQuery(calendarsQueryOptions());
     if (calendars[0]) {
       throw redirect({ to: "/app/$calendarId", params: { calendarId: calendars[0].id } });
     }

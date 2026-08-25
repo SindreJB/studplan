@@ -26,8 +26,8 @@ export function CreateCalendarForm() {
     onSubmit: async ({ value }) => {
       const calendar = await createCalendar.mutateAsync(value);
       if (!calendar) return;
-      await router.invalidate({ sync: true });
       await navigate({ to: "/app/$calendarId", params: { calendarId: calendar.id } });
+      await router.invalidate({ sync: true });
     },
   });
 

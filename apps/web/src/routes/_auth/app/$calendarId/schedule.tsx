@@ -17,14 +17,8 @@ export const Route = createFileRoute("/_auth/app/$calendarId/schedule")({
   loader: async ({ params, context }) => {
     const data = { calendarId: params.calendarId, semester: context.calendar.semester };
     const [events, courses] = await Promise.all([
-      context.queryClient.ensureQueryData({
-        ...scheduleQueryOptions(data.calendarId, data.semester),
-        revalidateIfStale: true,
-      }),
-      context.queryClient.ensureQueryData({
-        ...calendarCoursesQueryOptions(data.calendarId, data.semester),
-        revalidateIfStale: true,
-      }),
+      context.queryClient.fetchQuery(scheduleQueryOptions(data.calendarId, data.semester)),
+      context.queryClient.fetchQuery(calendarCoursesQueryOptions(data.calendarId, data.semester)),
     ]);
     return {
       events,

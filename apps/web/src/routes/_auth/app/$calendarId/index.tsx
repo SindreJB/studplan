@@ -1,5 +1,5 @@
 import { Button } from "@repo/ui/components/button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { BookOpen, Trash2 } from "lucide-react";
@@ -15,24 +15,20 @@ import { availableCoursesQueryOptions, calendarCoursesQueryOptions } from "#/lib
 export const Route = createFileRoute("/_auth/app/$calendarId/")({
   loader: async ({ params, context }) => {
     const semester = context.calendar.semester;
-    const [courses, selected] = await Promise.all([
-      context.queryClient.ensureQueryData({
-        ...availableCoursesQueryOptions(semester),
-        revalidateIfStale: true,
-      }),
-      context.queryClient.ensureQueryData({
-        ...calendarCoursesQueryOptions(params.calendarId, semester),
-        revalidateIfStale: true,
-      }),
+    await Promise.all([
+      context.queryClient.fetchQuery(availableCoursesQueryOptions(semester)),
+      context.queryClient.fetchQuery(calendarCoursesQueryOptions(params.calendarId, semester)),
     ]);
-    return { semester, courses, selected };
+    return { semester };
   },
   component: CoursesPage,
 });
 
 function CoursesPage() {
   const { calendarId } = Route.useParams();
-  const { semester, courses, selected } = Route.useLoaderData();
+  const { semester } = Route.useLoaderData();
+  const { data: courses } = useSuspenseQuery(availableCoursesQueryOptions(semester));
+  const { data: selected } = useSuspenseQuery(calendarCoursesQueryOptions(calendarId, semester));
   const router = useRouter();
   const removeCourse = useMutation(removeCalendarCourseMutationOptions());
   const updateColor = useMutation(updateCalendarCourseColorMutationOptions());
@@ -99,7 +95,6 @@ function CoursesPage() {
                       term: course.term,
                       color: event.target.value,
                     });
-                    await refresh();
                   }}
                 />
                 <div className="min-w-0 flex-1">

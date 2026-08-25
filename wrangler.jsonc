@@ -13,11 +13,19 @@
       "custom_domain": true,
     },
   ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+    },
+  },
   "vars": {
     "APP_URL": "https://studplan.ahse.dev",
   },
   "secrets": {
-    "required": ["BETTER_AUTH_SECRET", "SENTRY_DSN"],
+    "required": ["BETTER_AUTH_SECRET"],
   },
   "send_email": [
     {

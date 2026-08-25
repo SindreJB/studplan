@@ -78,7 +78,6 @@ export const updateCalendarCourseColorMutationOptions = () =>
     onSuccess: async (_result, data, _onMutateResult, context) => {
       await context.client.invalidateQueries({
         queryKey: calendarCoursesQueryOptions(data.calendarId, data.semester).queryKey,
-        refetchType: "all",
       });
     },
   });

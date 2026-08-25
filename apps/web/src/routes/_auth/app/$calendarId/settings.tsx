@@ -1,7 +1,8 @@
 import { Button } from "@repo/ui/components/button";
+import { toast } from "@repo/ui/components/toast";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Trash2 } from "lucide-react";
 
 import {
   deleteCalendarMutationOptions,
@@ -90,17 +91,34 @@ function SettingsPage() {
           </p>
         </div>
         {feeds.map((feed) => (
-          <a
-            key={feed.url}
-            href={feed.url}
-            className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm hover:bg-muted"
-          >
-            <span>
-              <strong className="block">{feed.label}</strong>
-              <span className="text-xs break-all text-muted-foreground">{feed.url}</span>
-            </span>
-            <ExternalLink className="size-4 shrink-0" />
-          </a>
+          <div className="flex items-center gap-3 rounded-lg border p-3 text-sm" key={feed.url}>
+            <a
+              href={feed.url}
+              className="flex min-w-0 flex-1 items-center justify-between gap-3 hover:text-primary"
+            >
+              <span>
+                <strong className="block">{feed.label}</strong>
+                <span className="text-xs break-all text-muted-foreground">{feed.url}</span>
+              </span>
+              <ExternalLink className="size-4 shrink-0" />
+            </a>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label={`Copy ${feed.label} feed URL`}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(feed.url);
+                  toast.add({ type: "success", description: "Feed URL copied." });
+                } catch {
+                  toast.add({ type: "error", description: "Could not copy feed URL." });
+                }
+              }}
+            >
+              <Copy />
+            </Button>
+          </div>
         ))}
       </section>
       <section className="flex items-center justify-between gap-4 rounded-xl border border-destructive/30 p-5">
