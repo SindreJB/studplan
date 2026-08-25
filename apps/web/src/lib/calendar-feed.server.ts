@@ -1,5 +1,7 @@
 import { db } from "@repo/db";
+import { schema } from "@repo/db/schema";
 import { Result } from "better-result";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { includeCourseEvent } from "./course-event-filter";
 import { CourseSyncError } from "./course-sync.server";
@@ -10,30 +12,55 @@ export type CalendarFeed = "unfiltered" | "filtered" | { courseId: string };
 const isCourseFeed = (feed: CalendarFeed): feed is { courseId: string } =>
   feed !== "unfiltered" && feed !== "filtered";
 
+const { calendar, calendarCourse, courseCatalog, courseSchedule } = schema;
+
 export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
   return Result.gen(async function* () {
     const selectedCalendar = yield* Result.await(
       Result.tryPromise({
-        try: () =>
-          db.query.calendar.findFirst({
-            where: { id: calendarId },
-            columns: { name: true },
-            with: {
-              courses: {
-                columns: {
-                  semester: true,
-                  courseId: true,
-                  term: true,
-                  excludedSourceIds: true,
-                },
-                where: isCourseFeed(feed) ? { courseId: feed.courseId } : undefined,
-                with: {
-                  catalog: { columns: { courses: true } },
-                  schedule: { columns: { events: true } },
-                },
-              },
-            },
-          }),
+        try: async () => {
+          const [calendarRow] = await db
+            .select({ name: calendar.name })
+            .from(calendar)
+            .where(eq(calendar.id, calendarId))
+            .limit(1);
+          if (!calendarRow) return null;
+
+          const courses = await db
+            .select({
+              semester: calendarCourse.semester,
+              courseId: calendarCourse.courseId,
+              term: calendarCourse.term,
+              excludedSourceIds: calendarCourse.excludedSourceIds,
+              events: courseSchedule.events,
+            })
+            .from(calendarCourse)
+            .leftJoin(
+              courseSchedule,
+              and(
+                eq(courseSchedule.semester, calendarCourse.semester),
+                eq(courseSchedule.courseId, calendarCourse.courseId),
+                eq(courseSchedule.term, calendarCourse.term),
+              ),
+            )
+            .where(
+              and(
+                eq(calendarCourse.calendarId, calendarId),
+                isCourseFeed(feed) ? eq(calendarCourse.courseId, feed.courseId) : undefined,
+              ),
+            );
+
+          const semesters = [...new Set(courses.map(({ semester }) => semester))];
+          const catalogs =
+            semesters.length === 0
+              ? []
+              : await db
+                  .select({ semester: courseCatalog.semester, courses: courseCatalog.courses })
+                  .from(courseCatalog)
+                  .where(inArray(courseCatalog.semester, semesters));
+
+          return { ...calendarRow, courses, catalogs };
+        },
         catch: (cause) =>
           new CourseSyncError({
             operation: "read",
@@ -44,9 +71,13 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
     );
     if (!selectedCalendar) return Result.ok(null);
 
+    const catalogBySemester = new Map(
+      selectedCalendar.catalogs.map(({ semester, courses }) => [semester, courses]),
+    );
     const rows = selectedCalendar.courses.flatMap((course) => {
-      if (!course.catalog || !course.schedule) return [];
-      return [{ ...course, catalog: course.catalog.courses, events: course.schedule.events }];
+      const catalog = catalogBySemester.get(course.semester);
+      if (!catalog || !course.events) return [];
+      return [{ ...course, catalog, events: course.events }];
     });
     const feedRow = isCourseFeed(feed)
       ? rows.find((row) => row.courseId === feed.courseId)
