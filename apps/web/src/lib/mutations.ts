@@ -92,7 +92,7 @@ export const updateExcludedSeriesMutationOptions = () =>
           refetchType: "all",
         }),
         context.client.invalidateQueries({
-          queryKey: scheduleQueryOptions(data.calendarId, data.semester).queryKey,
+          queryKey: scheduleQueryOptions(data.calendarId, data.semester, true).queryKey,
           refetchType: "all",
         }),
       ]);
@@ -109,7 +109,7 @@ export const removeCalendarCourseMutationOptions = () =>
           refetchType: "all",
         }),
         context.client.invalidateQueries({
-          queryKey: scheduleQueryOptions(data.calendarId, data.semester).queryKey,
+          queryKey: scheduleQueryOptions(data.calendarId, data.semester, true).queryKey,
           refetchType: "all",
         }),
       ]);
@@ -126,7 +126,7 @@ export const addCalendarCourseMutationOptions = () =>
           refetchType: "all",
         }),
         context.client.invalidateQueries({
-          queryKey: scheduleQueryOptions(data.calendarId, data.semester).queryKey,
+          queryKey: scheduleQueryOptions(data.calendarId, data.semester, true).queryKey,
           refetchType: "all",
         }),
       ]);

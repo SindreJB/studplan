@@ -88,9 +88,20 @@ export const $deleteCalendar = createServerFn({ method: "POST" })
 
 export const $getMySchedule = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator(z.object({ calendarId: calendarIdSchema, semester: semesterSchema }))
+  .validator(
+    z.object({
+      calendarId: calendarIdSchema,
+      semester: semesterSchema,
+      includeExcluded: z.boolean().default(false),
+    }),
+  )
   .handler(async ({ data, context }) => {
-    const result = await listCalendarSchedule(context.user.id, data.calendarId, data.semester);
+    const result = await listCalendarSchedule(
+      context.user.id,
+      data.calendarId,
+      data.semester,
+      data.includeExcluded,
+    );
     if (result.isErr()) throw result.error;
     return result.value;
   });

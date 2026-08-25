@@ -1,12 +1,15 @@
 import type { CourseScheduleEvent } from "@repo/db/schema";
 import { Button } from "@repo/ui/components/button";
-import { ClientOnly, createFileRoute } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
+import { ClientOnly, createFileRoute, useRouter } from "@tanstack/react-router";
 import { addDays, addWeeks, format, getISOWeek, startOfWeek } from "date-fns";
-import { CalendarX } from "lucide-react";
+import { CalendarX, Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { CurrentTimeIndicator } from "#/components/current-time-indicator";
 import { positionEvents } from "#/lib/calendar-layout";
+import { includeCourseEvent } from "#/lib/course-event-filter";
+import { updateExcludedSeriesMutationOptions } from "#/lib/mutations";
 import { calendarCoursesQueryOptions } from "#/lib/queries/courses";
 import { scheduleQueryOptions } from "#/lib/queries/schedule";
 
@@ -17,12 +20,16 @@ export const Route = createFileRoute("/_auth/app/$calendarId/schedule")({
   loader: async ({ params, context }) => {
     const data = { calendarId: params.calendarId, semester: context.calendar.semester };
     const [events, courses] = await Promise.all([
-      context.queryClient.fetchQuery(scheduleQueryOptions(data.calendarId, data.semester)),
+      context.queryClient.fetchQuery(scheduleQueryOptions(data.calendarId, data.semester, true)),
       context.queryClient.fetchQuery(calendarCoursesQueryOptions(data.calendarId, data.semester)),
     ]);
     return {
       events,
+      semester: data.semester,
       colors: new Map(courses.map((course) => [courseKey(course.id, course.term), course.color])),
+      excludedByCourse: new Map(
+        courses.map((course) => [courseKey(course.id, course.term), course.excludedSourceIds]),
+      ),
     };
   },
   component: SchedulePage,
@@ -45,11 +52,43 @@ function courseColor(color: string) {
 }
 
 function SchedulePage() {
-  const { events, colors } = Route.useLoaderData();
+  const { calendarId } = Route.useParams();
+  const { events, colors, semester, excludedByCourse } = Route.useLoaderData();
+  const router = useRouter();
+  const updateExcluded = useMutation(updateExcludedSeriesMutationOptions());
+  const [showHiddenEvents, setShowHiddenEvents] = useState(false);
   const [week, setWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+
+  function isHidden(event: CalendarEvent) {
+    return !includeCourseEvent(
+      event,
+      excludedByCourse.get(courseKey(event.courseId, event.term)) ?? [],
+    );
+  }
+
+  async function toggleEvent(event: CalendarEvent) {
+    const key = courseKey(event.courseId, event.term);
+    const excludedSourceIds = excludedByCourse.get(key) ?? [];
+    const nextExcludedSourceIds = excludedSourceIds.includes(event.sourceId)
+      ? excludedSourceIds.filter((sourceId) => sourceId !== event.sourceId)
+      : [...excludedSourceIds, event.sourceId];
+
+    await updateExcluded.mutateAsync({
+      calendarId,
+      semester,
+      id: event.courseId,
+      term: event.term,
+      excludedSourceIds: nextExcludedSourceIds,
+    });
+    await router.invalidate({ sync: true });
+  }
+
   const weekEnd = addWeeks(week, 1);
   const visible = events.filter(
-    (event) => event.startsAt >= week.getTime() && event.startsAt < weekEnd.getTime(),
+    (event) =>
+      event.startsAt >= week.getTime() &&
+      event.startsAt < weekEnd.getTime() &&
+      (showHiddenEvents || !isHidden(event)),
   );
 
   return (
@@ -61,7 +100,15 @@ function SchedulePage() {
             {format(week, "d MMM")}–{format(addDays(weekEnd, -1), "d MMM yyyy")}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showHiddenEvents}
+              onChange={(event) => setShowHiddenEvents(event.target.checked)}
+            />
+            Show hidden repeating events
+          </label>
           <Button variant="outline" onClick={() => setWeek(addWeeks(week, -1))}>
             Previous
           </Button>
@@ -82,7 +129,13 @@ function SchedulePage() {
           <p>No classes this week.</p>
         </div>
       ) : (
-        <WeekCalendar colors={colors} events={visible} weekStart={week} />
+        <WeekCalendar
+          colors={colors}
+          events={visible}
+          weekStart={week}
+          isHidden={isHidden}
+          onToggle={toggleEvent}
+        />
       )}
     </div>
   );
@@ -93,10 +146,14 @@ function WeekCalendar({
   colors,
   events,
   weekStart,
+  isHidden,
+  onToggle,
 }: {
   colors: Map<string, string>;
   events: CalendarEvent[];
   weekStart: Date;
+  isHidden: (event: CalendarEvent) => boolean;
+  onToggle: (event: CalendarEvent) => Promise<void>;
 }) {
   const days = Array.from({ length: 7 }, (_, day) => addDays(weekStart, day));
   const startHour = Math.max(
@@ -128,7 +185,13 @@ function WeekCalendar({
               ) : (
                 <div className="space-y-2">
                   {dayEvents.map((event) => (
-                    <EventContent colors={colors} event={event} key={event.eventId} />
+                    <EventContent
+                      colors={colors}
+                      event={event}
+                      key={event.eventId}
+                      hidden={isHidden(event)}
+                      onToggle={onToggle}
+                    />
                   ))}
                 </div>
               )}
@@ -199,7 +262,13 @@ function WeekCalendar({
                           width: `calc(${100 / columns}% - 4px)`,
                         }}
                       >
-                        <EventContent colors={colors} event={event} compact />
+                        <EventContent
+                          colors={colors}
+                          event={event}
+                          compact
+                          hidden={isHidden(event)}
+                          onToggle={onToggle}
+                        />
                       </div>
                     );
                   })}
@@ -218,15 +287,21 @@ function EventContent({
   colors,
   event,
   compact = false,
+  hidden,
+  onToggle,
 }: {
   colors: Map<string, string>;
   event: CalendarEvent;
   compact?: boolean;
+  hidden: boolean;
+  onToggle: (event: CalendarEvent) => Promise<void>;
 }) {
   const room = event.rooms.map((item) => item.roomName).join(", ");
   return (
     <div
-      className={compact ? "leading-tight" : "rounded-md border p-2"}
+      className={
+        compact ? "relative h-full pr-6 leading-tight" : "relative rounded-md border p-2 pb-9"
+      }
       style={
         compact
           ? undefined
@@ -239,6 +314,16 @@ function EventContent({
       </span>
       <span className="block truncate">{event.summary ?? event.teachingTitle}</span>
       {room && <span className="block truncate">{room}</span>}
+      <Button
+        type="button"
+        size="icon-xs"
+        variant="ghost"
+        className="absolute right-1 bottom-1"
+        aria-label={`${hidden ? "Show" : "Hide"} repeating ${event.courseId} event`}
+        onClick={() => void onToggle(event)}
+      >
+        {hidden ? <Eye /> : <Trash2 />}
+      </Button>
     </div>
   );
 }

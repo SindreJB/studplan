@@ -38,18 +38,20 @@ function CoursesPage() {
     await router.invalidate({ sync: true });
   }
 
-  async function toggleSeries(course: (typeof selected)[number], sourceId: string) {
+  function toggleSeries(course: (typeof selected)[number], sourceId: string) {
     const excludedSourceIds = course.excludedSourceIds.includes(sourceId)
       ? course.excludedSourceIds.filter((id) => id !== sourceId)
       : [...course.excludedSourceIds, sourceId];
-    await updateExcluded.mutateAsync({
-      calendarId,
-      semester,
-      id: course.id,
-      term: course.term,
-      excludedSourceIds,
-    });
-    await refresh();
+    updateExcluded.mutate(
+      {
+        calendarId,
+        semester,
+        id: course.id,
+        term: course.term,
+        excludedSourceIds,
+      },
+      { onSuccess: () => void refresh() },
+    );
   }
 
   return (
@@ -87,8 +89,8 @@ function CoursesPage() {
                   value={course.color}
                   aria-label={`Color for ${course.id}`}
                   className="size-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
-                  onChange={async (event) => {
-                    await updateColor.mutateAsync({
+                  onChange={(event) => {
+                    updateColor.mutate({
                       calendarId,
                       semester,
                       id: course.id,

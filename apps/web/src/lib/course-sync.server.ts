@@ -446,7 +446,12 @@ export function updateCalendarSemester(userId: string, calendarId: string, semes
   });
 }
 
-export function listCalendarSchedule(userId: string, calendarId: string, semester: string) {
+export function listCalendarSchedule(
+  userId: string,
+  calendarId: string,
+  semester: string,
+  includeExcluded = false,
+) {
   return Result.gen(async function* () {
     const schedules = yield* Result.await(
       Result.tryPromise({
@@ -485,7 +490,7 @@ export function listCalendarSchedule(userId: string, calendarId: string, semeste
     >();
     for (const schedule of schedules) {
       for (const event of schedule.events) {
-        if (includeCourseEvent(event, schedule.excludedSourceIds)) {
+        if (includeExcluded || includeCourseEvent(event, schedule.excludedSourceIds)) {
           events.set(event.eventId, {
             ...event,
             courseId: schedule.courseId,

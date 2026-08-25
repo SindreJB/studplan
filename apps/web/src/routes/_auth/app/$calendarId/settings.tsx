@@ -66,14 +66,13 @@ function SettingsPage() {
           aria-label="Semester"
           className="h-8 w-full max-w-xs rounded-2xl border border-input bg-background px-3 text-sm"
           value={calendar.semester}
-          onChange={async (event) => {
+          onChange={(event) => {
             const semester = event.target.value;
             if (!window.confirm("Change semester and remove all courses from this calendar?")) {
               event.target.value = calendar.semester;
               return;
             }
-            await updateSemester.mutateAsync({ calendarId, semester });
-            await refresh();
+            updateSemester.mutate({ calendarId, semester }, { onSuccess: () => void refresh() });
           }}
         >
           {semesterOptions().map((semester) => (
