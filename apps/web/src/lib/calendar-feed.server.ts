@@ -48,6 +48,12 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
       if (!course.catalog || !course.schedule) return [];
       return [{ ...course, catalog: course.catalog.courses, events: course.schedule.events }];
     });
+    const feedRow = isCourseFeed(feed)
+      ? rows.find((row) => row.courseId === feed.courseId)
+      : undefined;
+    const feedCourse = feedRow?.catalog.find(
+      (course) => course.id === feedRow.courseId && course.term === feedRow.term,
+    );
 
     const events = [
       ...rows.flatMap((row) => {
@@ -57,9 +63,9 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
           (item) => item.id === row.courseId && item.term === row.term,
         );
         const selectedEvents =
-          feed === "filtered"
-            ? row.events.filter((event) => includeCourseEvent(event, row.excludedSourceIds))
-            : row.events;
+          feed === "unfiltered"
+            ? row.events
+            : row.events.filter((event) => includeCourseEvent(event, row.excludedSourceIds));
 
         return selectedEvents.map((event) => ({
           uid: `${calendarId}-${row.semester}-${event.eventId}@studplan.ahse.dev`,
@@ -74,7 +80,9 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
       }),
     ];
 
-    const suffix = isCourseFeed(feed) ? ` · ${feed.courseId}` : ` · ${feed}`;
-    return Result.ok(createIcal(`${selectedCalendar.name}${suffix}`, events));
+    const name = isCourseFeed(feed)
+      ? `${feed.courseId} - ${feedCourse?.nameEn ?? feedCourse?.name ?? feedCourse?.nameNb ?? feedCourse?.nameNn ?? "Course"}`
+      : `${selectedCalendar.name} - ${feed}`;
+    return Result.ok(createIcal(name, events));
   });
 }
