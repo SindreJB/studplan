@@ -45,6 +45,7 @@ export const calendarCourse = sqliteTable(
     courseId: text("course_id").notNull(),
     term: integer("term").notNull(),
     color: text("color").default("#6366f1").notNull(),
+    includeExamDates: integer("include_exam_dates", { mode: "boolean" }).default(true).notNull(),
     excludedSourceIds: text("excluded_source_ids", { mode: "json" })
       .$type<string[]>()
       .default([])
@@ -69,6 +70,8 @@ export interface CourseScheduleEvent {
   teachingMethod?: string | null;
   teachingMethodName?: string | null;
   teachingTitle?: string | null;
+  kind?: "teaching" | "exam";
+  link?: string;
   staffs: ReadonlyArray<{
     id: string;
     firstname: string;

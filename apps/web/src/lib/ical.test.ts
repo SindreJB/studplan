@@ -11,6 +11,7 @@ test("creates an escaped UTC iCalendar feed", () => {
       endsAt: Date.UTC(2026, 7, 17, 10),
       summary: "Course; lecture",
       location: "Room, 1",
+      url: "https://example.test/course",
     },
   ]);
 
@@ -18,5 +19,6 @@ test("creates an escaped UTC iCalendar feed", () => {
   assert.match(ical, /DTSTART:20260817T081500Z\r\n/);
   assert.match(ical, /SUMMARY:Course\\; lecture\r\n/);
   assert.match(ical, /LOCATION:Room\\, 1\r\n/);
+  assert.match(ical, /URL:https:\/\/example.test\/course\r\n/);
   assert(ical.endsWith("END:VCALENDAR\r\n"));
 });

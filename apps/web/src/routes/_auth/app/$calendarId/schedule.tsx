@@ -297,6 +297,7 @@ function EventContent({
   onToggle: (event: CalendarEvent) => Promise<void>;
 }) {
   const room = event.rooms.map((item) => item.roomName).join(", ");
+  const mapUrls = [...new Set(event.rooms.map((item) => item.roomUrl).filter(Boolean))];
   return (
     <div
       className={
@@ -314,16 +315,29 @@ function EventContent({
       </span>
       <span className="block truncate">{event.summary ?? event.teachingTitle}</span>
       {room && <span className="block truncate">{room}</span>}
-      <Button
-        type="button"
-        size="icon-xs"
-        variant="ghost"
-        className="absolute right-1 bottom-1"
-        aria-label={`${hidden ? "Show" : "Hide"} repeating ${event.courseId} event`}
-        onClick={() => void onToggle(event)}
-      >
-        {hidden ? <Eye /> : <Trash2 />}
-      </Button>
+      {mapUrls.map((url, index) => (
+        <a
+          className="block truncate underline underline-offset-2"
+          href={url}
+          key={url}
+          rel="noreferrer"
+          target="_blank"
+        >
+          {mapUrls.length === 1 ? "MazeMap" : `MazeMap ${index + 1}`}
+        </a>
+      ))}
+      {event.kind !== "exam" && (
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          className="absolute right-1 bottom-1"
+          aria-label={`${hidden ? "Show" : "Hide"} repeating ${event.courseId} event`}
+          onClick={() => void onToggle(event)}
+        >
+          {hidden ? <Eye /> : <Trash2 />}
+        </Button>
+      )}
     </div>
   );
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `calendar_course` ADD `include_exam_dates` integer DEFAULT true NOT NULL;

@@ -1,10 +1,11 @@
 import { db } from "@repo/db";
 import { schema, type CourseScheduleEvent } from "@repo/db/schema";
 import { Result, TaggedError } from "better-result";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import { includeCourseEvent } from "./course-event-filter";
+import { getCourseExams, type NtnuExam } from "./ntnu-exam.server";
 import {
   getCourseSchedule,
   getCourses,
@@ -89,9 +90,45 @@ function selectionKey({ semester, id, term }: Selection) {
   return `${semester}\0${id}\0${term}`;
 }
 
-function scheduleRows(selections: readonly Selection[], schedule: Schedule) {
+function examScheduleEvents(exams: readonly NtnuExam[]): CourseScheduleEvent[] {
+  return exams
+    .filter((exam) => !exam.deferred)
+    .map((exam, index) => ({
+      eventId: `exam:${exam.courseCode}:${exam.startsAt}:${index}`,
+      sourceId: `exam:${exam.courseCode}:${exam.startsAt}:${index}`,
+      week: 0,
+      startsAt: exam.startsAt,
+      endsAt: exam.endsAt,
+      summary: `Exam · ${exam.form}`,
+      compulsory: true,
+      campusId: null,
+      teachingTitle: exam.occasion,
+      kind: "exam",
+      link: exam.sourceUrl,
+      staffs: [],
+      rooms: exam.locations.map((location) => ({
+        id: `exam-building:${location.buildingNumber}`,
+        roomId: location.buildingNumber,
+        roomName: location.rooms.join(", ") || location.buildingName,
+        roomUrl: location.mazeMapUrl ?? "",
+        campusId: "",
+        buildingId: location.buildingNumber,
+        buildingName: location.rooms.length > 0 ? location.buildingName : "",
+        buildingAcronym: "",
+      })),
+    }));
+}
+
+function scheduleRows(
+  selections: readonly Selection[],
+  schedule: Schedule,
+  examEventsByCourse: ReadonlyMap<string, readonly CourseScheduleEvent[]>,
+) {
   const events = new Map<string, CourseScheduleEvent[]>(
-    selections.map((selection) => [selectionKey(selection), []]),
+    selections.map((selection) => [
+      selectionKey(selection),
+      [...(examEventsByCourse.get(selection.id) ?? [])],
+    ]),
   );
 
   for (const event of schedule.events) {
@@ -112,6 +149,7 @@ function scheduleRows(selections: readonly Selection[], schedule: Schedule) {
       teachingMethod: event.teachingMethod,
       teachingMethodName: event.teachingMethodName,
       teachingTitle: event.teachingTitle,
+      kind: "teaching",
       staffs: event.staffs,
       rooms: event.room.map((room) => ({
         id: room.id,
@@ -136,8 +174,12 @@ function scheduleRows(selections: readonly Selection[], schedule: Schedule) {
   }));
 }
 
-function persistSchedule(selections: readonly Selection[], schedule: Schedule) {
-  const rows = scheduleRows(selections, schedule);
+function persistSchedule(
+  selections: readonly Selection[],
+  schedule: Schedule,
+  examEventsByCourse: ReadonlyMap<string, readonly CourseScheduleEvent[]>,
+) {
+  const rows = scheduleRows(selections, schedule, examEventsByCourse);
   if (rows.length === 0) return Promise.resolve(Result.ok(0));
 
   return Result.tryPromise({
@@ -161,7 +203,48 @@ function persistSchedule(selections: readonly Selection[], schedule: Schedule) {
 function syncCourseScheduleBatch(semester: string, selections: readonly Selection[]) {
   return Result.gen(async function* () {
     const schedule = yield* Result.await(getCourseSchedule(semester, selections));
-    yield* Result.await(persistSchedule(selections, schedule));
+    const examResults = await Promise.all(
+      [...new Set(selections.map(({ id }) => id))].map(async (courseId) => ({
+        courseId,
+        result: await getCourseExams(courseId, semester),
+      })),
+    );
+    const examEventsByCourse = new Map<string, readonly CourseScheduleEvent[]>();
+    const failedCourseIds: string[] = [];
+    for (const { courseId, result } of examResults) {
+      if (result.isErr()) {
+        failedCourseIds.push(courseId);
+        console.error({ message: "Could not sync NTNU exams", courseId, error: result.error });
+      } else {
+        examEventsByCourse.set(courseId, examScheduleEvents(result.value));
+      }
+    }
+    if (failedCourseIds.length > 0) {
+      const cached = yield* Result.await(
+        Result.tryPromise({
+          try: () =>
+            db
+              .select({ courseId: courseSchedule.courseId, events: courseSchedule.events })
+              .from(courseSchedule)
+              .where(
+                and(
+                  eq(courseSchedule.semester, semester),
+                  inArray(courseSchedule.courseId, failedCourseIds),
+                ),
+              ),
+          catch: (cause) => databaseError("read", cause),
+        }),
+      );
+      for (const row of cached) {
+        if (!examEventsByCourse.has(row.courseId)) {
+          examEventsByCourse.set(
+            row.courseId,
+            row.events.filter((event) => event.kind === "exam"),
+          );
+        }
+      }
+    }
+    yield* Result.await(persistSchedule(selections, schedule, examEventsByCourse));
     return Result.ok(selections.length);
   });
 }
@@ -257,6 +340,7 @@ export function listCalendarCourses(userId: string, calendarId: string, semester
               id: calendarCourse.courseId,
               term: calendarCourse.term,
               color: calendarCourse.color,
+              includeExamDates: calendarCourse.includeExamDates,
               excludedSourceIds: calendarCourse.excludedSourceIds,
               events: courseSchedule.events,
             })
@@ -286,16 +370,18 @@ export function listCalendarCourses(userId: string, calendarId: string, semester
         ...course,
         series: [
           ...new Map(
-            events.map((event) => [
-              event.sourceId,
-              {
-                sourceId: event.sourceId,
-                startsAt: event.startsAt,
-                endsAt: event.endsAt,
-                summary: event.summary,
-                room: event.rooms.map((room) => room.roomName).join(", "),
-              },
-            ]),
+            events
+              .filter((event) => event.kind !== "exam")
+              .map((event) => [
+                event.sourceId,
+                {
+                  sourceId: event.sourceId,
+                  startsAt: event.startsAt,
+                  endsAt: event.endsAt,
+                  summary: event.summary,
+                  room: event.rooms.map((room) => room.roomName).join(", "),
+                },
+              ]),
           ).values(),
         ].sort((left, right) => left.startsAt - right.startsAt),
       })),
@@ -307,7 +393,9 @@ function updateCalendarCourse(
   userId: string,
   calendarId: string,
   selection: Selection,
-  values: Partial<Pick<typeof calendarCourse.$inferInsert, "color" | "excludedSourceIds">>,
+  values: Partial<
+    Pick<typeof calendarCourse.$inferInsert, "color" | "includeExamDates" | "excludedSourceIds">
+  >,
 ) {
   return Result.gen(async function* () {
     const owned = yield* Result.await(
@@ -361,6 +449,15 @@ export function updateCalendarCourseColor(
   color: string,
 ) {
   return updateCalendarCourse(userId, calendarId, selection, { color });
+}
+
+export function updateIncludeExamDates(
+  userId: string,
+  calendarId: string,
+  selection: Selection,
+  includeExamDates: boolean,
+) {
+  return updateCalendarCourse(userId, calendarId, selection, { includeExamDates });
 }
 
 export function removeCalendarCourse(userId: string, calendarId: string, selection: Selection) {
@@ -461,6 +558,7 @@ export function listCalendarSchedule(
               courseId: courseSchedule.courseId,
               term: courseSchedule.term,
               excludedSourceIds: calendarCourse.excludedSourceIds,
+              includeExamDates: calendarCourse.includeExamDates,
               events: courseSchedule.events,
             })
             .from(courseSchedule)
@@ -490,7 +588,12 @@ export function listCalendarSchedule(
     >();
     for (const schedule of schedules) {
       for (const event of schedule.events) {
-        if (includeExcluded || includeCourseEvent(event, schedule.excludedSourceIds)) {
+        if (event.kind === "exam" && !schedule.includeExamDates) continue;
+        if (
+          event.kind === "exam" ||
+          includeExcluded ||
+          includeCourseEvent(event, schedule.excludedSourceIds)
+        ) {
           events.set(event.eventId, {
             ...event,
             courseId: schedule.courseId,

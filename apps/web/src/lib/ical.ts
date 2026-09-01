@@ -5,6 +5,7 @@ export interface IcalEvent {
   summary: string;
   description?: string;
   location?: string;
+  url?: string;
 }
 
 function escape(value: string) {
@@ -60,6 +61,7 @@ export function createIcal(name: string, events: readonly IcalEvent[]) {
       `SUMMARY:${escape(event.summary)}`,
       ...(event.description ? [`DESCRIPTION:${escape(event.description)}`] : []),
       ...(event.location ? [`LOCATION:${escape(event.location)}`] : []),
+      ...(event.url ? [`URL:${escape(event.url)}`] : []),
       "END:VEVENT",
     ]),
     "END:VCALENDAR",

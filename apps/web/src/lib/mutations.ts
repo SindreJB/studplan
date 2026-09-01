@@ -8,6 +8,7 @@ import {
   $updateCalendarCourseColor,
   $updateCalendarSemester,
   $updateExcludedSeries,
+  $updateIncludeExamDates,
 } from "./course.functions";
 import { calendarsQueryOptions } from "./queries/calendars";
 import { calendarCoursesQueryOptions } from "./queries/courses";
@@ -18,6 +19,7 @@ type CalendarSelection = Parameters<typeof $addCalendarCourse>[0]["data"];
 type UpdateSemesterInput = Parameters<typeof $updateCalendarSemester>[0]["data"];
 type UpdateColorInput = Parameters<typeof $updateCalendarCourseColor>[0]["data"];
 type UpdateExcludedSeriesInput = Parameters<typeof $updateExcludedSeries>[0]["data"];
+type UpdateIncludeExamDatesInput = Parameters<typeof $updateIncludeExamDates>[0]["data"];
 
 export const createCalendarMutationOptions = () =>
   mutationOptions({
@@ -79,6 +81,23 @@ export const updateCalendarCourseColorMutationOptions = () =>
       await context.client.invalidateQueries({
         queryKey: calendarCoursesQueryOptions(data.calendarId, data.semester).queryKey,
       });
+    },
+  });
+
+export const updateIncludeExamDatesMutationOptions = () =>
+  mutationOptions({
+    mutationFn: (data: UpdateIncludeExamDatesInput) => $updateIncludeExamDates({ data }),
+    onSuccess: async (_result, data, _onMutateResult, context) => {
+      await Promise.all([
+        context.client.invalidateQueries({
+          queryKey: calendarCoursesQueryOptions(data.calendarId, data.semester).queryKey,
+          refetchType: "all",
+        }),
+        context.client.invalidateQueries({
+          queryKey: scheduleQueryOptions(data.calendarId, data.semester, true).queryKey,
+          refetchType: "all",
+        }),
+      ]);
     },
   });
 

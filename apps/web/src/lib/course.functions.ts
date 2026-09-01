@@ -15,6 +15,7 @@ import {
   updateCalendarCourseColor,
   updateCalendarSemester,
   updateExcludedSeries,
+  updateIncludeExamDates,
 } from "./course-sync.server";
 
 const semesterSchema = z.string().regex(/^\d{2}[vh]$/);
@@ -115,6 +116,20 @@ export const $updateCalendarCourseColor = createServerFn({ method: "POST" })
       data.calendarId,
       data,
       data.color,
+    );
+    if (result.isErr()) throw result.error;
+    return result.value;
+  });
+
+export const $updateIncludeExamDates = createServerFn({ method: "POST" })
+  .middleware([freshAuthMiddleware])
+  .validator(selectionSchema.extend({ includeExamDates: z.boolean() }))
+  .handler(async ({ data, context }) => {
+    const result = await updateIncludeExamDates(
+      context.user.id,
+      data.calendarId,
+      data,
+      data.includeExamDates,
     );
     if (result.isErr()) throw result.error;
     return result.value;

@@ -32,6 +32,7 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
               courseId: calendarCourse.courseId,
               term: calendarCourse.term,
               excludedSourceIds: calendarCourse.excludedSourceIds,
+              includeExamDates: calendarCourse.includeExamDates,
               events: courseSchedule.events,
             })
             .from(calendarCourse)
@@ -93,20 +94,30 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
         const course = row.catalog.find(
           (item) => item.id === row.courseId && item.term === row.term,
         );
-        const selectedEvents =
-          feed === "unfiltered"
-            ? row.events
-            : row.events.filter((event) => includeCourseEvent(event, row.excludedSourceIds));
+        const selectedEvents = row.events.filter(
+          (event) =>
+            (event.kind !== "exam" || row.includeExamDates) &&
+            (event.kind === "exam" ||
+              feed === "unfiltered" ||
+              includeCourseEvent(event, row.excludedSourceIds)),
+        );
 
         return selectedEvents.map((event) => ({
           uid: `${calendarId}-${row.semester}-${event.eventId}@studplan.ahse.dev`,
           startsAt: event.startsAt,
           endsAt: event.endsAt,
           summary: `${row.courseId} · ${event.summary ?? event.teachingTitle ?? course?.name ?? "Class"}`,
-          description: event.teachingTitle ?? event.teachingMethodName ?? undefined,
+          description:
+            [
+              event.teachingTitle ?? event.teachingMethodName,
+              ...event.rooms.flatMap((room) => (room.roomUrl ? [`Map: ${room.roomUrl}`] : [])),
+            ]
+              .filter((value) => value != null)
+              .join("\n") || undefined,
           location: event.rooms
             .map((room) => `${room.roomName}${room.buildingName ? `, ${room.buildingName}` : ""}`)
             .join("; "),
+          url: event.link,
         }));
       }),
     ];
