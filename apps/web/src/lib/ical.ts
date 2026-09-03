@@ -11,9 +11,16 @@ export interface IcalEvent {
 function escape(value: string) {
   return value
     .replaceAll("\\", "\\\\")
-    .replaceAll("\n", "\\n")
+    .replaceAll(/\r\n|\r|\n/g, "\\n")
     .replaceAll(",", "\\,")
     .replaceAll(";", "\\;");
+}
+
+function escapeUri(value: string) {
+  // URI property values are not TEXT values and must not have punctuation
+  // escaped. Rejecting line breaks keeps an invalid URL from corrupting the
+  // following iCalendar properties.
+  return value.replaceAll(/\r\n|\r|\n/g, "");
 }
 
 function timestamp(value: number) {
@@ -61,7 +68,9 @@ export function createIcal(name: string, events: readonly IcalEvent[]) {
       `SUMMARY:${escape(event.summary)}`,
       ...(event.description ? [`DESCRIPTION:${escape(event.description)}`] : []),
       ...(event.location ? [`LOCATION:${escape(event.location)}`] : []),
-      ...(event.url ? [`URL:${escape(event.url)}`] : []),
+      ...(event.url ? [`URL:${escapeUri(event.url)}`] : []),
+      "STATUS:CONFIRMED",
+      "TRANSP:OPAQUE",
       "END:VEVENT",
     ]),
     "END:VCALENDAR",

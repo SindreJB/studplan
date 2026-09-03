@@ -111,6 +111,7 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
             [
               event.teachingTitle ?? event.teachingMethodName,
               ...event.rooms.flatMap((room) => (room.roomUrl ? [`Map: ${room.roomUrl}`] : [])),
+              ...(event.link ? [`More information: ${event.link}`] : []),
             ]
               .filter((value) => value != null)
               .join("\n") || undefined,
