@@ -51,7 +51,11 @@ function fold(line: string) {
   return parts.join("\r\n");
 }
 
-export function createIcal(name: string, events: readonly IcalEvent[]) {
+export function createIcal(name: string, events: readonly IcalEvent[], now = Date.now()) {
+  // Publish a fresh revision every eight hours so subscribers can reconsider
+  // existing events, including descriptions changed by feed-generation code.
+  const revisionInterval = 8 * 60 * 60 * 1000;
+  const revisionTimestamp = timestamp(Math.floor(now / revisionInterval) * revisionInterval);
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -62,7 +66,8 @@ export function createIcal(name: string, events: readonly IcalEvent[]) {
     ...events.flatMap((event) => [
       "BEGIN:VEVENT",
       `UID:${escape(event.uid)}`,
-      `DTSTAMP:${timestamp(event.startsAt)}`,
+      `DTSTAMP:${revisionTimestamp}`,
+      `LAST-MODIFIED:${revisionTimestamp}`,
       `DTSTART:${timestamp(event.startsAt)}`,
       `DTEND:${timestamp(event.endsAt)}`,
       `SUMMARY:${escape(event.summary)}`,
