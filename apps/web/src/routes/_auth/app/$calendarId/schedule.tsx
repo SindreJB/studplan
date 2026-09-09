@@ -3,10 +3,11 @@ import { Button } from "@repo/ui/components/button";
 import { useMutation } from "@tanstack/react-query";
 import { ClientOnly, createFileRoute, useRouter } from "@tanstack/react-router";
 import { addDays, addWeeks, format, getISOWeek, startOfWeek } from "date-fns";
-import { CalendarX, Eye, Trash2 } from "lucide-react";
+import { CalendarX } from "lucide-react";
 import { useState } from "react";
 
 import { CurrentTimeIndicator } from "#/components/current-time-indicator";
+import { scheduleEventColorStyle, ScheduleEventContent } from "#/components/schedule-event-content";
 import { positionEvents } from "#/lib/calendar-layout";
 import { includeCourseEvent } from "#/lib/course-event-filter";
 import { updateExcludedSeriesMutationOptions } from "#/lib/mutations";
@@ -42,13 +43,6 @@ function minutesSinceMidnight(timestamp: number) {
 
 function courseKey(courseId: string, term: number) {
   return `${courseId}¤${term}`;
-}
-
-function courseColor(color: string) {
-  return {
-    backgroundColor: `color-mix(in oklab, ${color} 18%, var(--background))`,
-    borderColor: `color-mix(in oklab, ${color} 55%, var(--border))`,
-  };
 }
 
 function SchedulePage() {
@@ -185,12 +179,12 @@ function WeekCalendar({
               ) : (
                 <div className="space-y-2">
                   {dayEvents.map((event) => (
-                    <EventContent
-                      colors={colors}
+                    <ScheduleEventContent
+                      color={colors.get(courseKey(event.courseId, event.term))}
                       event={event}
                       key={event.eventId}
                       hidden={isHidden(event)}
-                      onToggle={onToggle}
+                      onToggle={() => void onToggle(event)}
                     />
                   ))}
                 </div>
@@ -253,7 +247,7 @@ function WeekCalendar({
                         className="absolute overflow-hidden rounded-md border p-1.5 text-left text-xs shadow-sm"
                         key={event.eventId}
                         style={{
-                          ...courseColor(
+                          ...scheduleEventColorStyle(
                             colors.get(courseKey(event.courseId, event.term)) ?? "#6366f1",
                           ),
                           top,
@@ -262,12 +256,11 @@ function WeekCalendar({
                           width: `calc(${100 / columns}% - 4px)`,
                         }}
                       >
-                        <EventContent
-                          colors={colors}
+                        <ScheduleEventContent
                           event={event}
                           compact
                           hidden={isHidden(event)}
-                          onToggle={onToggle}
+                          onToggle={() => void onToggle(event)}
                         />
                       </div>
                     );
@@ -279,65 +272,5 @@ function WeekCalendar({
         </div>
       </div>
     </>
-  );
-}
-
-// react-doctor-disable-next-line react-doctor/no-multi-component-file
-function EventContent({
-  colors,
-  event,
-  compact = false,
-  hidden,
-  onToggle,
-}: {
-  colors: Map<string, string>;
-  event: CalendarEvent;
-  compact?: boolean;
-  hidden: boolean;
-  onToggle: (event: CalendarEvent) => Promise<void>;
-}) {
-  const room = event.rooms.map((item) => item.roomName).join(", ");
-  const mapUrls = [...new Set(event.rooms.map((item) => item.roomUrl).filter(Boolean))];
-  return (
-    <div
-      className={
-        compact ? "relative h-full pr-6 leading-tight" : "relative rounded-md border p-2 pb-9"
-      }
-      style={
-        compact
-          ? undefined
-          : courseColor(colors.get(courseKey(event.courseId, event.term)) ?? "#6366f1")
-      }
-    >
-      <strong className="block">{event.courseId}</strong>
-      <span className="block">
-        {format(event.startsAt, "HH:mm")}–{format(event.endsAt, "HH:mm")}
-      </span>
-      <span className="block truncate">{event.summary ?? event.teachingTitle}</span>
-      {room && <span className="block truncate">{room}</span>}
-      {mapUrls.map((url, index) => (
-        <a
-          className="block truncate underline underline-offset-2"
-          href={url}
-          key={url}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {mapUrls.length === 1 ? "MazeMap" : `MazeMap ${index + 1}`}
-        </a>
-      ))}
-      {event.kind !== "exam" && (
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          className="absolute right-1 bottom-1"
-          aria-label={`${hidden ? "Show" : "Hide"} repeating ${event.courseId} event`}
-          onClick={() => void onToggle(event)}
-        >
-          {hidden ? <Eye /> : <Trash2 />}
-        </Button>
-      )}
-    </div>
   );
 }
