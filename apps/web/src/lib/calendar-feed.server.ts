@@ -12,7 +12,10 @@ export type CalendarFeed = "unfiltered" | "filtered" | { courseId: string };
 const isCourseFeed = (feed: CalendarFeed): feed is { courseId: string } =>
   feed !== "unfiltered" && feed !== "filtered";
 
-const { calendar, calendarCourse, courseCatalog, courseSchedule } = schema;
+const { calendar, calendarCourse, courseCatalog, courseSchedule, courseSubmission } = schema;
+
+/** Deadlines are a point in time; give them a short block so they show up in day views. */
+const SUBMISSION_DURATION_MS = 30 * 60 * 1000;
 
 export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
   return Result.gen(async function* () {
@@ -33,6 +36,7 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
               term: calendarCourse.term,
               excludedSourceIds: calendarCourse.excludedSourceIds,
               includeExamDates: calendarCourse.includeExamDates,
+              includeSubmissionDates: calendarCourse.includeSubmissionDates,
               events: courseSchedule.events,
             })
             .from(calendarCourse)
@@ -52,15 +56,38 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
             );
 
           const semesters = [...new Set(courses.map(({ semester }) => semester))];
-          const catalogs =
+          const [catalogs, submissions] =
             semesters.length === 0
-              ? []
-              : await db
-                  .select({ semester: courseCatalog.semester, courses: courseCatalog.courses })
-                  .from(courseCatalog)
-                  .where(inArray(courseCatalog.semester, semesters));
+              ? [[], []]
+              : await Promise.all([
+                  db
+                    .select({ semester: courseCatalog.semester, courses: courseCatalog.courses })
+                    .from(courseCatalog)
+                    .where(inArray(courseCatalog.semester, semesters)),
+                  db
+                    .select({
+                      id: courseSubmission.id,
+                      semester: courseSubmission.semester,
+                      courseId: courseSubmission.courseId,
+                      term: courseSubmission.term,
+                      title: courseSubmission.title,
+                      dueAt: courseSubmission.dueAt,
+                      description: courseSubmission.description,
+                      link: courseSubmission.link,
+                    })
+                    .from(courseSubmission)
+                    .where(
+                      and(
+                        inArray(courseSubmission.semester, semesters),
+                        inArray(
+                          courseSubmission.courseId,
+                          courses.map(({ courseId }) => courseId),
+                        ),
+                      ),
+                    ),
+                ]);
 
-          return { ...calendarRow, courses, catalogs };
+          return { ...calendarRow, courses, catalogs, submissions };
         },
         catch: (cause) =>
           new CourseSyncError({
@@ -86,6 +113,36 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
     const feedCourse = feedRow?.catalog.find(
       (course) => course.id === feedRow.courseId && course.term === feedRow.term,
     );
+
+    // Deadlines are read off the tracked courses rather than off `rows`, so a course
+    // whose timetable has not been synced yet still exports its deadlines. The full
+    // feed carries every deadline; the filtered and per-course feeds follow the
+    // course's "include submission due dates" choice.
+    const submissionEvents = selectedCalendar.courses.flatMap((row) => {
+      if (feed !== "unfiltered" && !row.includeSubmissionDates) return [];
+
+      return selectedCalendar.submissions
+        .filter(
+          (submission) =>
+            submission.semester === row.semester &&
+            submission.courseId === row.courseId &&
+            submission.term === row.term,
+        )
+        .map((submission) => ({
+          uid: `${calendarId}-${row.semester}-submission-${submission.id}@studplan.ahse.dev`,
+          startsAt: submission.dueAt,
+          endsAt: submission.dueAt + SUBMISSION_DURATION_MS,
+          summary: `${row.courseId} · ${submission.title}`,
+          description:
+            [
+              submission.description,
+              ...(submission.link ? [`More information: ${submission.link}`] : []),
+            ]
+              .filter((value) => value != null)
+              .join("\n") || undefined,
+          url: submission.link ?? undefined,
+        }));
+    });
 
     const events = [
       ...rows.flatMap((row) => {
@@ -121,6 +178,7 @@ export function getCalendarIcal(calendarId: string, feed: CalendarFeed) {
           url: event.link,
         }));
       }),
+      ...submissionEvents,
     ];
 
     const name = isCourseFeed(feed)

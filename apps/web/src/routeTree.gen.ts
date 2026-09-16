@@ -26,6 +26,7 @@ import { Route as CalendarsCalendarIdChar123feedChar125DoticsRouteImport } from 
 import { Route as AuthAppCalendarIdIndexRouteImport } from './routes/_auth/app/$calendarId/index'
 import { Route as AuthAppCalendarIdScheduleRouteImport } from './routes/_auth/app/$calendarId/schedule'
 import { Route as AuthAppCalendarIdSettingsRouteImport } from './routes/_auth/app/$calendarId/settings'
+import { Route as AuthAppCalendarIdSubmissionsRouteImport } from './routes/_auth/app/$calendarId/submissions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -113,6 +114,12 @@ const AuthAppCalendarIdSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthAppCalendarIdRouteRoute,
   } as any)
+const AuthAppCalendarIdSubmissionsRoute =
+  AuthAppCalendarIdSubmissionsRouteImport.update({
+    id: '/submissions',
+    path: '/submissions',
+    getParentRoute: () => AuthAppCalendarIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthAppIndexRoute
   '/app/$calendarId/schedule': typeof AuthAppCalendarIdScheduleRoute
   '/app/$calendarId/settings': typeof AuthAppCalendarIdSettingsRoute
+  '/app/$calendarId/submissions': typeof AuthAppCalendarIdSubmissionsRoute
   '/app/$calendarId/': typeof AuthAppCalendarIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthAppIndexRoute
   '/app/$calendarId/schedule': typeof AuthAppCalendarIdScheduleRoute
   '/app/$calendarId/settings': typeof AuthAppCalendarIdSettingsRoute
+  '/app/$calendarId/submissions': typeof AuthAppCalendarIdSubmissionsRoute
   '/app/$calendarId': typeof AuthAppCalendarIdIndexRoute
 }
 export interface FileRoutesById {
@@ -164,6 +173,7 @@ export interface FileRoutesById {
   '/_auth/app/': typeof AuthAppIndexRoute
   '/_auth/app/$calendarId/schedule': typeof AuthAppCalendarIdScheduleRoute
   '/_auth/app/$calendarId/settings': typeof AuthAppCalendarIdSettingsRoute
+  '/_auth/app/$calendarId/submissions': typeof AuthAppCalendarIdSubmissionsRoute
   '/_auth/app/$calendarId/': typeof AuthAppCalendarIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/$calendarId/schedule'
     | '/app/$calendarId/settings'
+    | '/app/$calendarId/submissions'
     | '/app/$calendarId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/$calendarId/schedule'
     | '/app/$calendarId/settings'
+    | '/app/$calendarId/submissions'
     | '/app/$calendarId'
   id:
     | '__root__'
@@ -217,6 +229,7 @@ export interface FileRouteTypes {
     | '/_auth/app/'
     | '/_auth/app/$calendarId/schedule'
     | '/_auth/app/$calendarId/settings'
+    | '/_auth/app/$calendarId/submissions'
     | '/_auth/app/$calendarId/'
   fileRoutesById: FileRoutesById
 }
@@ -349,12 +362,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAppCalendarIdSettingsRouteImport
       parentRoute: typeof AuthAppCalendarIdRouteRoute
     }
+    '/_auth/app/$calendarId/submissions': {
+      id: '/_auth/app/$calendarId/submissions'
+      path: '/submissions'
+      fullPath: '/app/$calendarId/submissions'
+      preLoaderRoute: typeof AuthAppCalendarIdSubmissionsRouteImport
+      parentRoute: typeof AuthAppCalendarIdRouteRoute
+    }
   }
 }
 
 interface AuthAppCalendarIdRouteRouteChildren {
   AuthAppCalendarIdScheduleRoute: typeof AuthAppCalendarIdScheduleRoute
   AuthAppCalendarIdSettingsRoute: typeof AuthAppCalendarIdSettingsRoute
+  AuthAppCalendarIdSubmissionsRoute: typeof AuthAppCalendarIdSubmissionsRoute
   AuthAppCalendarIdIndexRoute: typeof AuthAppCalendarIdIndexRoute
 }
 
@@ -362,6 +383,7 @@ const AuthAppCalendarIdRouteRouteChildren: AuthAppCalendarIdRouteRouteChildren =
   {
     AuthAppCalendarIdScheduleRoute: AuthAppCalendarIdScheduleRoute,
     AuthAppCalendarIdSettingsRoute: AuthAppCalendarIdSettingsRoute,
+    AuthAppCalendarIdSubmissionsRoute: AuthAppCalendarIdSubmissionsRoute,
     AuthAppCalendarIdIndexRoute: AuthAppCalendarIdIndexRoute,
   }
 

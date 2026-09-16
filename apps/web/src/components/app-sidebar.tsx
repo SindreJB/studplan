@@ -33,6 +33,7 @@ import {
   CalendarDays,
   CalendarRange,
   ChevronsUpDown,
+  ClipboardList,
   ListChecks,
   Plus,
   Settings,
@@ -50,7 +51,10 @@ type AppNavLinkProps = {
   link: LinkOptions<
     RegisteredRouter,
     string,
-    "/app/$calendarId" | "/app/$calendarId/schedule" | "/app/$calendarId/settings"
+    | "/app/$calendarId"
+    | "/app/$calendarId/schedule"
+    | "/app/$calendarId/submissions"
+    | "/app/$calendarId/settings"
   >;
 };
 
@@ -89,6 +93,14 @@ export function AppSidebar({ calendars }: { calendars: Calendar[] }) {
           icon: CalendarRange,
           link: linkOptions({
             to: "/app/$calendarId/schedule",
+            params: { calendarId: activeCalendar.id },
+          }),
+        },
+        {
+          label: "Submissions",
+          icon: ClipboardList,
+          link: linkOptions({
+            to: "/app/$calendarId/submissions",
             params: { calendarId: activeCalendar.id },
           }),
         },

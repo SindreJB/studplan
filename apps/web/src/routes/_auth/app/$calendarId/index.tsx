@@ -10,6 +10,7 @@ import {
   updateCalendarCourseColorMutationOptions,
   updateExcludedSeriesMutationOptions,
   updateIncludeExamDatesMutationOptions,
+  updateIncludeSubmissionDatesMutationOptions,
 } from "#/lib/mutations";
 import { availableCoursesQueryOptions, calendarCoursesQueryOptions } from "#/lib/queries/courses";
 
@@ -35,6 +36,7 @@ function CoursesPage() {
   const updateColor = useMutation(updateCalendarCourseColorMutationOptions());
   const updateExcluded = useMutation(updateExcludedSeriesMutationOptions());
   const updateIncludeExamDates = useMutation(updateIncludeExamDatesMutationOptions());
+  const updateIncludeSubmissionDates = useMutation(updateIncludeSubmissionDatesMutationOptions());
 
   async function refresh() {
     await router.invalidate({ sync: true });
@@ -121,6 +123,22 @@ function CoursesPage() {
                       }}
                     />
                     Include exam dates
+                  </label>
+                  <label className="mt-2 flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={course.includeSubmissionDates}
+                      onChange={(event) => {
+                        updateIncludeSubmissionDates.mutate({
+                          calendarId,
+                          semester,
+                          id: course.id,
+                          term: course.term,
+                          includeSubmissionDates: event.target.checked,
+                        });
+                      }}
+                    />
+                    Include submission due dates
                   </label>
                   {course.series.length > 0 && (
                     <details className="mt-3 text-sm">

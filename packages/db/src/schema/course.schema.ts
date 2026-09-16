@@ -1,5 +1,12 @@
 import { defineRelationsPart, sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth.schema";
 
@@ -46,6 +53,9 @@ export const calendarCourse = sqliteTable(
     term: integer("term").notNull(),
     color: text("color").default("#6366f1").notNull(),
     includeExamDates: integer("include_exam_dates", { mode: "boolean" }).default(true).notNull(),
+    includeSubmissionDates: integer("include_submission_dates", { mode: "boolean" })
+      .default(true)
+      .notNull(),
     excludedSourceIds: text("excluded_source_ids", { mode: "json" })
       .$type<string[]>()
       .default([])
@@ -101,6 +111,38 @@ export const courseSchedule = sqliteTable(
     syncedAt: integer("synced_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.semester, table.courseId, table.term] })],
+);
+
+/**
+ * Submission deadlines are shared course data, not per-user data: every calendar
+ * tracking the course sees the same deadlines. Today any signed-in user may add
+ * or remove them. Once admin roles exist, writes move behind an admin check and
+ * everyone else files change proposals instead.
+ */
+export const courseSubmission = sqliteTable(
+  "course_submission",
+  {
+    id: text("id").primaryKey(),
+    semester: text("semester").notNull(),
+    courseId: text("course_id").notNull(),
+    term: integer("term").notNull(),
+    title: text("title").notNull(),
+    dueAt: integer("due_at").notNull(),
+    description: text("description"),
+    link: text("link"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (table) => [
+    index("course_submission_course_idx").on(table.semester, table.courseId, table.term),
+    uniqueIndex("course_submission_title_uidx").on(
+      table.semester,
+      table.courseId,
+      table.term,
+      table.title,
+    ),
+  ],
 );
 
 export const courseRelations = defineRelationsPart(

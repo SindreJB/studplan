@@ -341,6 +341,7 @@ export function listCalendarCourses(userId: string, calendarId: string, semester
               term: calendarCourse.term,
               color: calendarCourse.color,
               includeExamDates: calendarCourse.includeExamDates,
+              includeSubmissionDates: calendarCourse.includeSubmissionDates,
               excludedSourceIds: calendarCourse.excludedSourceIds,
               events: courseSchedule.events,
             })
@@ -394,7 +395,10 @@ function updateCalendarCourse(
   calendarId: string,
   selection: Selection,
   values: Partial<
-    Pick<typeof calendarCourse.$inferInsert, "color" | "includeExamDates" | "excludedSourceIds">
+    Pick<
+      typeof calendarCourse.$inferInsert,
+      "color" | "includeExamDates" | "includeSubmissionDates" | "excludedSourceIds"
+    >
   >,
 ) {
   return Result.gen(async function* () {
@@ -458,6 +462,15 @@ export function updateIncludeExamDates(
   includeExamDates: boolean,
 ) {
   return updateCalendarCourse(userId, calendarId, selection, { includeExamDates });
+}
+
+export function updateIncludeSubmissionDates(
+  userId: string,
+  calendarId: string,
+  selection: Selection,
+  includeSubmissionDates: boolean,
+) {
+  return updateCalendarCourse(userId, calendarId, selection, { includeSubmissionDates });
 }
 
 export function removeCalendarCourse(userId: string, calendarId: string, selection: Selection) {

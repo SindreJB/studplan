@@ -16,6 +16,7 @@ import {
   updateCalendarSemester,
   updateExcludedSeries,
   updateIncludeExamDates,
+  updateIncludeSubmissionDates,
 } from "./course-sync.server";
 
 const semesterSchema = z.string().regex(/^\d{2}[vh]$/);
@@ -130,6 +131,20 @@ export const $updateIncludeExamDates = createServerFn({ method: "POST" })
       data.calendarId,
       data,
       data.includeExamDates,
+    );
+    if (result.isErr()) throw result.error;
+    return result.value;
+  });
+
+export const $updateIncludeSubmissionDates = createServerFn({ method: "POST" })
+  .middleware([freshAuthMiddleware])
+  .validator(selectionSchema.extend({ includeSubmissionDates: z.boolean() }))
+  .handler(async ({ data, context }) => {
+    const result = await updateIncludeSubmissionDates(
+      context.user.id,
+      data.calendarId,
+      data,
+      data.includeSubmissionDates,
     );
     if (result.isErr()) throw result.error;
     return result.value;
