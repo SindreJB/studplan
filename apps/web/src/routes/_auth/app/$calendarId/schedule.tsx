@@ -3,7 +3,7 @@ import { Button } from "@repo/ui/components/button";
 import { useMutation } from "@tanstack/react-query";
 import { ClientOnly, createFileRoute, useRouter } from "@tanstack/react-router";
 import { addDays, addWeeks, format, getISOWeek, startOfWeek } from "date-fns";
-import { CalendarX } from "lucide-react";
+import { CalendarX, ClipboardList } from "lucide-react";
 import { useState } from "react";
 
 import { CurrentTimeIndicator } from "#/components/current-time-indicator";
@@ -13,19 +13,31 @@ import { includeCourseEvent } from "#/lib/course-event-filter";
 import { updateExcludedSeriesMutationOptions } from "#/lib/mutations";
 import { calendarCoursesQueryOptions } from "#/lib/queries/courses";
 import { scheduleQueryOptions } from "#/lib/queries/schedule";
+import { calendarSubmissionsQueryOptions } from "#/lib/queries/submissions";
 
 const HOUR_HEIGHT = 64;
 type CalendarEvent = CourseScheduleEvent & { courseId: string; term: number };
+type Deadline = {
+  id: string;
+  courseId: string;
+  term: number;
+  title: string;
+  dueAt: number;
+};
 
 export const Route = createFileRoute("/_auth/app/$calendarId/schedule")({
   loader: async ({ params, context }) => {
     const data = { calendarId: params.calendarId, semester: context.calendar.semester };
-    const [events, courses] = await Promise.all([
+    const [events, courses, submissions] = await Promise.all([
       context.queryClient.fetchQuery(scheduleQueryOptions(data.calendarId, data.semester, true)),
       context.queryClient.fetchQuery(calendarCoursesQueryOptions(data.calendarId, data.semester)),
+      context.queryClient.fetchQuery(
+        calendarSubmissionsQueryOptions(data.calendarId, data.semester),
+      ),
     ]);
     return {
       events,
+      submissions,
       semester: data.semester,
       colors: new Map(courses.map((course) => [courseKey(course.id, course.term), course.color])),
       excludedByCourse: new Map(
@@ -47,7 +59,7 @@ function courseKey(courseId: string, term: number) {
 
 function SchedulePage() {
   const { calendarId } = Route.useParams();
-  const { events, colors, semester, excludedByCourse } = Route.useLoaderData();
+  const { events, submissions, colors, semester, excludedByCourse } = Route.useLoaderData();
   const router = useRouter();
   const updateExcluded = useMutation(updateExcludedSeriesMutationOptions());
   const [showHiddenEvents, setShowHiddenEvents] = useState(false);
@@ -84,6 +96,9 @@ function SchedulePage() {
       event.startsAt < weekEnd.getTime() &&
       (showHiddenEvents || !isHidden(event)),
   );
+  const deadlines = submissions.filter(
+    (submission) => submission.dueAt >= week.getTime() && submission.dueAt < weekEnd.getTime(),
+  );
 
   return (
     <div className="w-full space-y-6">
@@ -117,7 +132,7 @@ function SchedulePage() {
           </Button>
         </div>
       </header>
-      {visible.length === 0 ? (
+      {visible.length === 0 && deadlines.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           <CalendarX className="mx-auto mb-3 size-8" />
           <p>No classes this week.</p>
@@ -126,6 +141,7 @@ function SchedulePage() {
         <WeekCalendar
           colors={colors}
           events={visible}
+          deadlines={deadlines}
           weekStart={week}
           isHidden={isHidden}
           onToggle={toggleEvent}
@@ -139,17 +155,23 @@ function SchedulePage() {
 function WeekCalendar({
   colors,
   events,
+  deadlines,
   weekStart,
   isHidden,
   onToggle,
 }: {
   colors: Map<string, string>;
   events: CalendarEvent[];
+  deadlines: Deadline[];
   weekStart: Date;
   isHidden: (event: CalendarEvent) => boolean;
   onToggle: (event: CalendarEvent) => Promise<void>;
 }) {
   const days = Array.from({ length: 7 }, (_, day) => addDays(weekStart, day));
+  const deadlinesOn = (date: Date) =>
+    deadlines
+      .filter((deadline) => new Date(deadline.dueAt).toDateString() === date.toDateString())
+      .sort((left, right) => left.dueAt - right.dueAt);
   const startHour = Math.max(
     0,
     Math.min(
@@ -171,10 +193,11 @@ function WeekCalendar({
           const dayEvents = events.filter(
             (event) => new Date(event.startsAt).toDateString() === date.toDateString(),
           );
+          const dayDeadlines = deadlinesOn(date);
           return (
             <section className="rounded-lg border p-3" key={date.toISOString()}>
               <h2 className="mb-2 text-sm font-semibold">{format(date, "EEEE d MMM")}</h2>
-              {dayEvents.length === 0 ? (
+              {dayEvents.length === 0 && dayDeadlines.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No classes</p>
               ) : (
                 <div className="space-y-2">
@@ -185,6 +208,13 @@ function WeekCalendar({
                       key={event.eventId}
                       hidden={isHidden(event)}
                       onToggle={() => void onToggle(event)}
+                    />
+                  ))}
+                  {dayDeadlines.map((deadline) => (
+                    <DeadlineChip
+                      color={colors.get(courseKey(deadline.courseId, deadline.term))}
+                      deadline={deadline}
+                      key={deadline.id}
                     />
                   ))}
                 </div>
@@ -269,8 +299,52 @@ function WeekCalendar({
               );
             })}
           </div>
+          {deadlines.length > 0 && (
+            <div className="grid grid-cols-[4rem_repeat(7,minmax(7rem,1fr))] border-t bg-muted/40">
+              <div className="px-2 py-2 text-right text-xs text-muted-foreground">Due</div>
+              {days.map((date) => (
+                <div className="space-y-1 border-l p-1" key={date.toISOString()}>
+                  {deadlinesOn(date).map((deadline) => (
+                    <DeadlineChip
+                      color={colors.get(courseKey(deadline.courseId, deadline.term))}
+                      compact
+                      deadline={deadline}
+                      key={deadline.id}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>
+  );
+}
+
+/** A submission deadline, carrying the colour of the course it belongs to. */
+// react-doctor-disable-next-line react-doctor/no-multi-component-file
+function DeadlineChip({
+  deadline,
+  color = "#6366f1",
+  compact = false,
+}: {
+  deadline: Deadline;
+  color?: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-md border leading-tight ${compact ? "p-1 text-xs" : "p-2 text-sm"}`}
+      style={scheduleEventColorStyle(color)}
+      title={`${deadline.courseId}: ${deadline.title}`}
+    >
+      <strong className="flex items-center gap-1">
+        <ClipboardList className="size-3 shrink-0" />
+        <span className="truncate">{deadline.courseId}</span>
+      </strong>
+      <span className="block truncate">{deadline.title}</span>
+      <span className="block">Due {format(deadline.dueAt, "HH:mm")}</span>
+    </div>
   );
 }
