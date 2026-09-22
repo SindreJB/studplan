@@ -74,13 +74,13 @@ function AccountSettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold">Account settings</h1>
+      <header className="border-b border-border pb-5">
+        <h1 className="catalog-display text-4xl">Account settings</h1>
         <p className="text-sm text-muted-foreground">{user.email}</p>
       </header>
 
-      <section className="rounded-xl border bg-card p-5">
-        <h2 className="font-medium">Change password</h2>
+      <section className="border border-border p-5">
+        <h2 className="catalog-eyebrow">Change password</h2>
         <form
           className="mt-4 space-y-4"
           onSubmit={(event) => {
@@ -123,8 +123,8 @@ function AccountSettingsPage() {
         </form>
       </section>
 
-      <section className="rounded-xl border border-destructive/30 p-5">
-        <h2 className="font-medium">Delete account</h2>
+      <section className="border border-destructive p-5">
+        <h2 className="catalog-eyebrow">Delete account</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           This permanently deletes your calendars and account.
         </p>

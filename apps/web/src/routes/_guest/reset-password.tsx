@@ -41,7 +41,7 @@ function ResetPasswordForm() {
   if (error || !token) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-xl font-bold">Invalid reset link</h1>
+        <h1 className="catalog-display text-3xl">Invalid reset link</h1>
         <Link to="/forgot-password" className="text-sm underline underline-offset-4">
           Request another link
         </Link>
@@ -52,7 +52,7 @@ function ResetPasswordForm() {
   if (reset.isSuccess) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-xl font-bold">Password updated</h1>
+        <h1 className="catalog-display text-3xl">Password updated</h1>
         <Link to="/login" className="text-sm underline underline-offset-4">
           Sign in
         </Link>
@@ -68,7 +68,7 @@ function ResetPasswordForm() {
         form.handleSubmit();
       }}
     >
-      <h1 className="text-xl font-bold">Choose a new password</h1>
+      <h1 className="catalog-display text-3xl">Choose a new password</h1>
       {(["password", "confirmPassword"] as const).map((name) => (
         <form.Field key={name} name={name}>
           {(field) => (

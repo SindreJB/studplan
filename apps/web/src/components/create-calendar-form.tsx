@@ -33,11 +33,11 @@ export function CreateCalendarForm() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 items-center">
-      <div className="w-full rounded-xl border bg-card p-6 shadow-sm">
+      <div className="w-full border border-border p-6 ">
         <span className="mb-5 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <CalendarPlus />
         </span>
-        <h1 className="text-2xl font-semibold">Create a calendar</h1>
+        <h1 className="catalog-display text-4xl">Create a calendar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Give it a name. You can add courses next.
         </p>
@@ -71,7 +71,7 @@ export function CreateCalendarForm() {
                 <select
                   id={field.name}
                   name={field.name}
-                  className="h-8 w-full rounded-2xl border border-input bg-background px-3 text-sm"
+                  className="h-9 w-full border border-input bg-background px-3 text-sm"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}

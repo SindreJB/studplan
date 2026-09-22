@@ -1,12 +1,209 @@
 @import "@repo/ui/styles/base.css";
 @source "./";
 
-@import "@fontsource-variable/inter";
-
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: "Inter Variable", sans-serif;
+  --font-sans: "Libre Franklin", Arial, Helvetica, sans-serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-display);
 }
+
+/* ---------------------------------------------------------------------------
+   Catalog primitives
+
+   The whole app is built from four moves: a mono eyebrow, a display headline,
+   a hairline rule, and a block that inverts on hover. Everything else is
+   spacing.
+   --------------------------------------------------------------------------- */
+
+.catalog-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.catalog-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+.catalog-display-italic {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.catalog-wordmark {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.07em;
+  text-transform: uppercase;
+}
+
+/* A bordered block. Borders are drawn as hairlines in ink, never as cards. */
+.catalog-panel {
+  border: 1px solid var(--border);
+}
+
+/* Blocks that flip to ink-on-paper when pointed at — the catalog's only
+   hover state, used for tiles, rows and menu items alike. */
+.catalog-invert {
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.catalog-invert:hover {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.catalog-invert:hover .catalog-eyebrow {
+  color: var(--background);
+}
+
+.catalog-underline:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   Landing grid
+   --------------------------------------------------------------------------- */
+
+.catalog-home {
+  min-height: 100svh;
+  background: var(--background);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-header {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(380px, 1.9fr) minmax(70px, 0.4fr);
+  gap: 24px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.catalog-brand {
+  font-size: clamp(19px, 1.6vw, 25px);
+  line-height: 1.05;
+  align-self: start;
+}
+
+.catalog-intro p {
+  font-family: var(--font-display);
+  font-size: clamp(19px, 1.7vw, 28px);
+  font-weight: 600;
+  line-height: 1.12;
+  margin: 0 0 18px;
+}
+
+.catalog-intro em {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.catalog-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.catalog-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, minmax(190px, 1fr));
+}
+
+.catalog-tile {
+  position: relative;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 42px 28px 26px;
+  text-align: center;
+}
+
+.catalog-tile:nth-child(3n) {
+  border-right: 0;
+}
+
+.catalog-tile:nth-child(n + 4) {
+  border-bottom: 0;
+}
+
+.catalog-number {
+  position: absolute;
+  top: 15px;
+  left: 4px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.catalog-tile-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 95%;
+  font-size: clamp(32px, 3.8vw, 68px);
+  font-weight: 700;
+  letter-spacing: -0.075em;
+  line-height: 0.83;
+}
+
+.catalog-tile-title small {
+  margin-top: 13px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tile-serif {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.tile-serif-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.tile-sans {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.09em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------------
+   Example week on the landing page
+   --------------------------------------------------------------------------- */
 
 @keyframes landing-event-settle {
   from {
@@ -22,5 +219,69 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-event {
     animation: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .catalog-home {
+    padding: 12px;
+  }
+
+  .catalog-header {
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+  }
+
+  .catalog-intro {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .catalog-intro p {
+    font-size: clamp(17px, 4.7vw, 24px);
+  }
+
+  .catalog-meta {
+    font-size: 12px;
+  }
+
+  .catalog-tile {
+    padding: 38px 12px 18px;
+  }
+
+  .catalog-number {
+    top: 10px;
+    font-size: 13px;
+  }
+
+  .catalog-tile-title {
+    font-size: clamp(23px, 6.5vw, 48px);
+  }
+}
+
+@media (max-width: 460px) {
+  .catalog-brand {
+    font-size: 17px;
+  }
+
+  .catalog-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, minmax(130px, 1fr));
+  }
+
+  .catalog-tile:nth-child(3n) {
+    border-right: 1px solid var(--border);
+  }
+
+  .catalog-tile:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .catalog-tile:nth-child(n + 4) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .catalog-tile:nth-child(n + 5) {
+    border-bottom: 0;
   }
 }

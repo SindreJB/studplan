@@ -104,7 +104,7 @@ function SchedulePage() {
     <div className="w-full space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Schedule (Week {getISOWeek(week)})</h1>
+          <h1 className="catalog-display text-4xl">Schedule (Week {getISOWeek(week)})</h1>
           <p className="text-sm text-muted-foreground">
             {format(week, "d MMM")}–{format(addDays(weekEnd, -1), "d MMM yyyy")}
           </p>
@@ -133,7 +133,7 @@ function SchedulePage() {
         </div>
       </header>
       {visible.length === 0 && deadlines.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+        <div className="border border-dashed border-border p-12 text-center text-muted-foreground">
           <CalendarX className="mx-auto mb-3 size-8" />
           <p>No classes this week.</p>
         </div>
@@ -195,8 +195,8 @@ function WeekCalendar({
           );
           const dayDeadlines = deadlinesOn(date);
           return (
-            <section className="rounded-lg border p-3" key={date.toISOString()}>
-              <h2 className="mb-2 text-sm font-semibold">{format(date, "EEEE d MMM")}</h2>
+            <section className="border border-border p-3" key={date.toISOString()}>
+              <h2 className="mb-2 font-semibold tracking-tight">{format(date, "EEEE d MMM")}</h2>
               {dayEvents.length === 0 && dayDeadlines.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No classes</p>
               ) : (
@@ -224,13 +224,13 @@ function WeekCalendar({
         })}
       </div>
 
-      <div className="hidden overflow-x-auto rounded-lg border md:block">
+      <div className="hidden overflow-x-auto border border-border md:block">
         <div className="min-w-4xl">
           <div className="grid grid-cols-[4rem_repeat(7,minmax(7rem,1fr))] border-b bg-muted/40">
             <div />
             {days.map((date) => (
               <div className="border-l px-2 py-3 text-center" key={date.toISOString()}>
-                <div className="text-xs text-muted-foreground">{format(date, "EEE")}</div>
+                <div className="catalog-eyebrow">{format(date, "EEE")}</div>
                 <div className="font-semibold">{format(date, "d")}</div>
               </div>
             ))}
@@ -239,7 +239,7 @@ function WeekCalendar({
             <div className="relative" style={{ height }}>
               {hours.map((hour) => (
                 <span
-                  className="absolute right-2 -translate-y-1/2 text-xs text-muted-foreground"
+                  className="catalog-eyebrow absolute right-2 -translate-y-1/2 tabular-nums"
                   key={hour}
                   style={{ top: (hour - startHour) * HOUR_HEIGHT }}
                 >
@@ -274,7 +274,7 @@ function WeekCalendar({
                     );
                     return (
                       <div
-                        className="absolute overflow-hidden rounded-md border p-1.5 text-left text-xs shadow-sm"
+                        className="absolute overflow-hidden border border-border p-1.5 text-left text-xs "
                         key={event.eventId}
                         style={{
                           ...scheduleEventColorStyle(
@@ -335,7 +335,7 @@ function DeadlineChip({
 }) {
   return (
     <div
-      className={`rounded-md border leading-tight ${compact ? "p-1 text-xs" : "p-2 text-sm"}`}
+      className={`border border-border leading-tight ${compact ? "p-1 text-xs" : "p-2 text-sm"}`}
       style={scheduleEventColorStyle(color)}
       title={`${deadline.courseId}: ${deadline.title}`}
     >

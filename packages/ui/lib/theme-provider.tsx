@@ -15,6 +15,10 @@ type ThemeProviderState = {
 
 const THEME_EVENT = "theme-change";
 
+/**
+ * Dark is the catalog's native state and the value `:root` already carries,
+ * so an unset preference stays dark rather than following the OS.
+ */
 function getThemeScript(storageKey: string) {
   const key = JSON.stringify(storageKey);
 
@@ -22,7 +26,7 @@ function getThemeScript(storageKey: string) {
   try {
     var t = localStorage.getItem(${key});
     if (t !== "light" && t !== "dark") {
-      t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      t = "dark";
       localStorage.setItem(${key}, t);
     }
     var e = document.documentElement;
@@ -52,9 +56,9 @@ export function ThemeProvider({ children, storageKey = "theme" }: ThemeProviderP
   }, []);
   const getSnapshot = useCallback((): Theme => {
     const stored = localStorage.getItem(storageKey);
-    return stored === "dark" ? "dark" : "light";
+    return stored === "light" ? "light" : "dark";
   }, [storageKey]);
-  const theme = useSyncExternalStore<Theme>(subscribe, getSnapshot, () => "light");
+  const theme = useSyncExternalStore<Theme>(subscribe, getSnapshot, () => "dark");
   const setTheme = useCallback(
     (next: Theme) => {
       localStorage.setItem(storageKey, next);

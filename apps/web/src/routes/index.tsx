@@ -1,7 +1,7 @@
 import { authQueryOptions } from "@repo/auth/tanstack/queries";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarDays, Clock3 } from "lucide-react";
 
+import { CatalogMenu } from "#/components/catalog-menu";
 import { scheduleEventColorStyle, ScheduleEventContent } from "#/components/schedule-event-content";
 import { ThemeToggle } from "#/components/theme-toggle";
 
@@ -149,151 +149,162 @@ const classes = [
   },
 ];
 
+/** The six entries of the catalog, in reading order. */
+const tiles = [
+  { number: "01", title: "Courses", caption: "From the NTNU catalog", face: "tile-serif" },
+  { number: "02", title: "Schedule", caption: "Every class, one week", face: "tile-serif-italic" },
+  { number: "03", title: "Deadlines", caption: "Submissions, tracked", face: "tile-serif" },
+  { number: "04", title: "Exams", caption: "Dates as they land", face: "tile-serif-italic" },
+  { number: "05", title: "Feeds", caption: "Subscribe by .ics", face: "tile-sans" },
+  { number: "06", title: "Account", caption: "Calendars and settings", face: "tile-sans" },
+] as const;
+
 function HomePage() {
   const user = Route.useLoaderData();
+  const entry = user ? "/app" : "/login";
 
   return (
-    <main className="min-h-svh overflow-hidden bg-background text-foreground selection:bg-violet-200 selection:text-violet-950 dark:selection:bg-violet-800 dark:selection:text-violet-50">
-      <nav
-        className="mx-auto flex max-w-7xl items-center justify-between border-b px-5 py-4 sm:px-8"
-        aria-label="Main navigation"
-      >
-        <Link
-          to="/"
-          className="group flex items-center gap-2.5 rounded-lg font-semibold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
-        >
-          <span className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background transition-transform group-hover:-rotate-3">
-            <CalendarDays className="size-4.5" aria-hidden="true" />
-          </span>
-          Studplan
-        </Link>
-        <div className="flex items-center gap-1.5">
-          <Link
-            to={user ? "/app" : "/login"}
-            className="rounded-2xl px-3 py-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none"
-          >
-            {user ? "Go to dashboard" : "Log in"}
-          </Link>
+    <main className="catalog-home">
+      <header className="catalog-header">
+        <div className="catalog-brand catalog-display">
+          Studplan,
+          <br />
+          course calendars
+          <br />
+          for NTNU
+        </div>
+
+        <div className="catalog-intro">
+          <p>
+            Build a calendar from the courses you actually take — classes, exams and submission
+            deadlines together — then subscribe to it from the calendar app you already use.
+          </p>
+          <em>
+            Pick courses · hide the lectures you skip · one .ics feed per course, or all of them at
+            once.
+          </em>
+        </div>
+
+        <div className="catalog-meta">
+          <CatalogMenu
+            links={[
+              { label: user ? "Dashboard" : "Log in", to: entry },
+              { label: "Sign up", to: "/signup" },
+              { label: "Home", to: "/" },
+            ]}
+          />
           <ThemeToggle />
         </div>
-      </nav>
+      </header>
 
-      <section className="mx-auto max-w-7xl px-5 pt-12 sm:px-8 sm:pt-16 lg:pt-20">
-        <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="max-w-4xl">
-            <h1 className="max-w-3xl text-4xl leading-[1.05] font-bold tracking-[-0.04em] text-balance sm:text-5xl">
-              Build your calendar from{" "}
-              <span className="text-violet-700 dark:text-violet-400">NTNU courses.</span>
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-              Review classes and exams, then subscribe with the calendar app you already use.
-            </p>
-          </div>
-          <Link
-            to="/app"
-            className="group inline-flex min-h-11 items-center gap-2 justify-self-start rounded-2xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-violet-600 focus-visible:ring-3 focus-visible:ring-violet-400/40 focus-visible:outline-none active:translate-y-px lg:justify-self-end"
-          >
-            Go to dashboard
-            <ArrowRight
-              className="size-4 transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
+      <div className="catalog-grid">
+        {tiles.map((tile) => (
+          <Link className="catalog-tile catalog-invert" key={tile.number} to={entry}>
+            <span className="catalog-number">{tile.number}</span>
+            <span className={`catalog-tile-title ${tile.face}`}>
+              {tile.title}
+              <small>{tile.caption}</small>
+            </span>
           </Link>
+        ))}
+      </div>
+
+      <section className="mt-12 border-t border-border">
+        <div className="flex items-center justify-between gap-4 border-b border-border py-3">
+          <span className="catalog-eyebrow">Example week</span>
+          <span className="catalog-eyebrow hidden sm:inline">
+            Courses, rooms and times, as they arrive
+          </span>
+          <span className="catalog-eyebrow tabular-nums">Week 42</span>
         </div>
 
-        <div className="mt-12 border-y sm:mt-16">
-          <div className="flex items-center justify-between gap-4 py-3 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Example week</span>
-            <span className="hidden sm:inline">Courses, rooms, and times shown together</span>
-            <span className="flex items-center gap-1.5 tabular-nums">
-              <Clock3 className="size-3.5" aria-hidden="true" />
-              Week 42
-            </span>
-          </div>
-
-          <div className="hidden min-h-[30rem] grid-cols-[3.5rem_repeat(5,minmax(0,1fr))] grid-rows-[auto_1fr] md:grid">
-            <div className="border-r" aria-hidden="true" />
-            {weekdays.map((day) => (
-              <div className="border-r px-3 py-2.5 text-xs font-medium last:border-r-0" key={day}>
-                {day}
-              </div>
-            ))}
-
-            <div className="relative border-r text-xs text-muted-foreground tabular-nums">
-              {["08", "10", "12", "14", "16"].map((hour, index) => (
-                <span
-                  className="absolute right-3 -translate-y-1/2"
-                  style={{ top: `${2 + index * 20}%` }}
-                  key={hour}
-                >
-                  {hour}:00
-                </span>
-              ))}
+        <div className="hidden min-h-[30rem] grid-cols-[3.5rem_repeat(5,minmax(0,1fr))] grid-rows-[auto_1fr] md:grid">
+          <div className="border-r border-b border-border" aria-hidden="true" />
+          {weekdays.map((day) => (
+            <div
+              className="catalog-eyebrow border-r border-b border-border px-3 py-3 last:border-r-0"
+              key={day}
+            >
+              {day}
             </div>
-            {weekdays.map((day, dayIndex) => (
-              <div
-                className="relative border-r bg-[linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[length:100%_20%] last:border-r-0"
-                key={day}
+          ))}
+
+          <div className="relative border-r border-border">
+            {["08", "10", "12", "14", "16"].map((hour, index) => (
+              <span
+                className="catalog-eyebrow absolute right-3 -translate-y-1/2 tabular-nums"
+                style={{ top: `${2 + index * 20}%` }}
+                key={hour}
               >
-                {classes
-                  .filter((entry) => entry.day === dayIndex)
-                  .map((entry, index) => (
-                    <article
-                      className="landing-event absolute inset-x-2 h-[18%] overflow-hidden rounded-md border p-2 text-xs shadow-sm"
-                      style={{
-                        ...scheduleEventColorStyle(entry.color),
-                        top: entry.top,
-                        animationDelay: `${120 + (entry.day + index) * 70}ms`,
-                      }}
-                      key={`${entry.code}-${entry.day}-${entry.start}`}
-                    >
-                      <ScheduleEventContent
-                        compact
-                        event={{
-                          courseId: entry.code,
-                          startsAt: 0,
-                          endsAt: 0,
-                          summary: entry.title,
-                          kind: "teaching",
-                          rooms: [{ roomName: entry.room, roomUrl: "" }],
-                        }}
-                        timeLabel={`${entry.start}–${entry.end}`}
-                      />
-                    </article>
-                  ))}
-              </div>
+                {hour}:00
+              </span>
             ))}
           </div>
-
-          <div className="space-y-3 py-3 md:hidden">
-            {classes
-              .filter(
-                (entry, index) =>
-                  classes.findIndex((candidate) => candidate.day === entry.day) === index,
-              )
-              .map((entry) => (
-                <article
-                  className="landing-event"
-                  key={`${entry.code}-${entry.day}-${entry.start}`}
-                >
-                  <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                    {weekdays[entry.day]}
-                  </p>
-                  <ScheduleEventContent
-                    color={entry.color}
-                    event={{
-                      courseId: entry.code,
-                      startsAt: 0,
-                      endsAt: 0,
-                      summary: entry.title,
-                      kind: "teaching",
-                      rooms: [{ roomName: entry.room, roomUrl: "" }],
+          {weekdays.map((day, dayIndex) => (
+            <div
+              className="relative border-r border-border bg-[linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[length:100%_20%] last:border-r-0"
+              key={day}
+            >
+              {classes
+                .filter((event) => event.day === dayIndex)
+                .map((event, index) => (
+                  <article
+                    className="landing-event absolute inset-x-2 h-[18%] overflow-hidden border p-2 text-xs"
+                    style={{
+                      ...scheduleEventColorStyle(event.color),
+                      top: event.top,
+                      animationDelay: `${120 + (event.day + index) * 70}ms`,
                     }}
-                    timeLabel={`${entry.start}–${entry.end}`}
-                  />
-                </article>
-              ))}
-          </div>
+                    key={`${event.code}-${event.day}-${event.start}`}
+                  >
+                    <ScheduleEventContent
+                      compact
+                      event={{
+                        courseId: event.code,
+                        startsAt: 0,
+                        endsAt: 0,
+                        summary: event.title,
+                        kind: "teaching",
+                        rooms: [{ roomName: event.room, roomUrl: "" }],
+                      }}
+                      timeLabel={`${event.start}–${event.end}`}
+                    />
+                  </article>
+                ))}
+            </div>
+          ))}
+        </div>
+
+        <div className="divide-y divide-border md:hidden">
+          {classes
+            .filter(
+              (event, index) =>
+                classes.findIndex((candidate) => candidate.day === event.day) === index,
+            )
+            .map((event) => (
+              <article className="landing-event py-3" key={`${event.code}-${event.day}`}>
+                <p className="catalog-eyebrow mb-2">{weekdays[event.day]}</p>
+                <ScheduleEventContent
+                  color={event.color}
+                  event={{
+                    courseId: event.code,
+                    startsAt: 0,
+                    endsAt: 0,
+                    summary: event.title,
+                    kind: "teaching",
+                    rooms: [{ roomName: event.room, roomUrl: "" }],
+                  }}
+                  timeLabel={`${event.start}–${event.end}`}
+                />
+              </article>
+            ))}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border py-4">
+          <span className="catalog-eyebrow">Studplan · NTNU</span>
+          <Link className="catalog-underline text-sm font-bold" to={entry}>
+            {user ? "Go to dashboard" : "Log in"} →
+          </Link>
         </div>
       </section>
     </main>

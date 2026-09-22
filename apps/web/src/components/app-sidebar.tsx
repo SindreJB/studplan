@@ -129,16 +129,16 @@ export function AppSidebar({ calendars }: { calendars: Calendar[] }) {
                   />
                 }
               >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:size-8">
+                <span className="flex size-8 shrink-0 items-center justify-center bg-sidebar-primary font-mono text-sm text-sidebar-primary-foreground group-data-[collapsible=icon]:size-8">
                   S
                 </span>
                 {state === "expanded" && (
                   <>
                     <span className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">
+                      <span className="truncate font-semibold tracking-tight">
                         {activeCalendar?.name ?? "Studplan"}
                       </span>
-                      <span className="truncate text-xs">
+                      <span className="catalog-eyebrow truncate">
                         {activeCalendar ? "Calendar" : "No calendar"}
                       </span>
                     </span>

@@ -1,5 +1,7 @@
 import { authQueryOptions } from "@repo/auth/tanstack/queries";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+
+import { ThemeToggle } from "#/components/theme-toggle";
 
 export const Route = createFileRoute("/_guest")({
   component: RouteComponent,
@@ -24,9 +26,21 @@ export const Route = createFileRoute("/_guest")({
 
 function RouteComponent() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Outlet />
+    <div className="flex min-h-svh flex-col bg-background p-3.5">
+      <header className="flex items-start justify-between border-b border-border pb-5">
+        <Link className="catalog-display text-xl leading-[1.05]" to="/">
+          Studplan,
+          <br />
+          course calendars
+          <br />
+          for NTNU
+        </Link>
+        <ThemeToggle />
+      </header>
+      <div className="flex flex-1 items-center justify-center py-12">
+        <div className="w-full max-w-sm border border-border p-7">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

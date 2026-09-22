@@ -13,10 +13,15 @@ export type ScheduleEventDisplay = {
   rooms: ReadonlyArray<{ roomName: string; roomUrl: string }>;
 };
 
+/**
+ * Events keep their per-course color, but as a rule down the leading edge
+ * rather than a tinted block — the grid stays paper and ink.
+ */
 export function scheduleEventColorStyle(color: string) {
   return {
-    backgroundColor: `color-mix(in oklab, ${color} 18%, var(--background))`,
-    borderColor: `color-mix(in oklab, ${color} 55%, var(--border))`,
+    backgroundColor: "var(--background)",
+    borderColor: "var(--border)",
+    boxShadow: `inset 3px 0 0 0 ${color}`,
   };
 }
 
@@ -42,17 +47,19 @@ export function ScheduleEventContent({
     <div
       className={
         compact
-          ? `relative h-full leading-tight ${onToggle ? "pr-6" : ""}`
-          : `relative rounded-md border p-2 ${onToggle ? "pb-9" : ""}`
+          ? `relative h-full pl-1.5 leading-tight ${onToggle ? "pr-6" : ""}`
+          : `relative border p-2 pl-3 ${onToggle ? "pb-9" : ""}`
       }
       style={compact ? undefined : scheduleEventColorStyle(color)}
     >
-      <strong className="block">{event.courseId}</strong>
-      <span className="block">
+      <strong className="block font-mono text-[11px] tracking-[0.06em] uppercase">
+        {event.courseId}
+      </strong>
+      <span className="block font-mono text-[11px] tabular-nums">
         {timeLabel ?? `${format(event.startsAt, "HH:mm")}–${format(event.endsAt, "HH:mm")}`}
       </span>
       <span className="block truncate">{event.summary ?? event.teachingTitle}</span>
-      {room && <span className="block truncate">{room}</span>}
+      {room && <span className="block truncate text-muted-foreground">{room}</span>}
       {mapUrls.map((url, index) => (
         <a
           className="block truncate underline underline-offset-2"

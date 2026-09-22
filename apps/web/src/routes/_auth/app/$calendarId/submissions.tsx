@@ -70,7 +70,7 @@ function SubmissionsPage() {
 
     if (editingId === submission.id) {
       return (
-        <article className="rounded-xl border bg-card p-4" key={submission.id}>
+        <article className="border border-border p-4" key={submission.id}>
           <SubmissionForm
             calendarId={calendarId}
             semester={semester}
@@ -84,7 +84,7 @@ function SubmissionsPage() {
     }
 
     return (
-      <article className="flex items-start gap-4 rounded-xl border bg-card p-4" key={submission.id}>
+      <article className="flex items-start gap-4 border border-border p-4" key={submission.id}>
         <span
           aria-hidden
           className="mt-1.5 size-3 shrink-0 rounded-full"
@@ -92,7 +92,7 @@ function SubmissionsPage() {
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <h3 className="font-medium">{submission.title}</h3>
+            <h3 className="font-semibold tracking-tight">{submission.title}</h3>
             <span className="text-sm text-muted-foreground">
               {submission.courseId} · term {submission.term}
             </span>
@@ -148,9 +148,9 @@ function SubmissionsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8">
-      <header>
-        <p className="text-sm text-muted-foreground">Semester {semester}</p>
-        <h1 className="text-2xl font-semibold">Submissions</h1>
+      <header className="border-b border-border pb-5">
+        <p className="catalog-eyebrow">Semester {semester}</p>
+        <h1 className="catalog-display text-4xl">Submissions</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Deadlines for the assignments in your courses. They are shared with everyone taking the
           course, so anyone can add and correct them. The full calendar feed always includes them;
@@ -167,7 +167,7 @@ function SubmissionsPage() {
       </header>
 
       {courses.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+        <div className="border border-dashed border-border p-10 text-center text-muted-foreground">
           <ClipboardList className="mx-auto mb-3 size-8" />
           <p>
             Add a course on the{" "}
@@ -183,8 +183,8 @@ function SubmissionsPage() {
         </div>
       ) : (
         <>
-          <section className="rounded-xl border bg-card p-5">
-            <h2 className="mb-3 font-medium">Add a deadline</h2>
+          <section className="border border-border p-5">
+            <h2 className="catalog-eyebrow mb-3">Add a deadline</h2>
             <SubmissionForm
               calendarId={calendarId}
               semester={semester}
@@ -194,9 +194,9 @@ function SubmissionsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="font-medium">Upcoming ({upcoming.length})</h2>
+            <h2 className="catalog-eyebrow">Upcoming ({upcoming.length})</h2>
             {upcoming.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+              <div className="border border-dashed border-border p-10 text-center text-muted-foreground">
                 <ClipboardList className="mx-auto mb-3 size-8" />
                 <p>No upcoming deadlines registered.</p>
               </div>
@@ -207,7 +207,7 @@ function SubmissionsPage() {
 
           {past.length > 0 && (
             <section className="space-y-3">
-              <h2 className="font-medium">Past ({past.length})</h2>
+              <h2 className="catalog-eyebrow">Past ({past.length})</h2>
               <div className="space-y-3 opacity-60">{past.map(renderSubmission)}</div>
             </section>
           )}

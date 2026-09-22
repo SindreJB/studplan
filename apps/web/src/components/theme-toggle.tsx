@@ -9,13 +9,12 @@ export function ThemeToggle() {
   return (
     <Button
       variant="outline"
-      size="icon"
+      size="icon-sm"
       onClick={() => setTheme(nextTheme)}
       aria-label={`Switch to ${nextTheme} theme`}
       title={`Switch to ${nextTheme} theme`}
     >
-      <SunIcon className="size-[1.2rem] dark:hidden" />
-      <MoonIcon className="hidden size-[1.2rem] dark:block" />
+      {theme === "dark" ? <MoonIcon className="size-4" /> : <SunIcon className="size-4" />}
     </Button>
   );
 }

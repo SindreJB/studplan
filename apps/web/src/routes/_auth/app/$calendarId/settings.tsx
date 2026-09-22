@@ -51,20 +51,20 @@ function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold">Settings</h1>
+      <header className="border-b border-border pb-5">
+        <h1 className="catalog-display text-4xl">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage {calendar?.name ?? "this calendar"}.</p>
       </header>
-      <section className="space-y-3 rounded-xl border bg-card p-5">
+      <section className="space-y-3 border border-border p-5">
         <div>
-          <h2 className="font-medium">Semester</h2>
+          <h2 className="catalog-eyebrow">Semester</h2>
           <p className="text-sm text-muted-foreground">
             Changing semester removes every course from this calendar.
           </p>
         </div>
         <select
           aria-label="Semester"
-          className="h-8 w-full max-w-xs rounded-2xl border border-input bg-background px-3 text-sm"
+          className="h-9 w-full max-w-xs border border-input bg-background px-3 text-sm"
           value={calendar.semester}
           onChange={(event) => {
             const semester = event.target.value;
@@ -82,15 +82,15 @@ function SettingsPage() {
           ))}
         </select>
       </section>
-      <section className="space-y-3 rounded-xl border bg-card p-5">
+      <section className="space-y-3 border border-border p-5">
         <div>
-          <h2 className="font-medium">Calendar feeds</h2>
+          <h2 className="catalog-eyebrow">Calendar feeds</h2>
           <p className="text-sm text-muted-foreground">
             Add one of these subscription URLs to Google Calendar.
           </p>
         </div>
         {feeds.map((feed) => (
-          <div className="flex items-center gap-3 rounded-lg border p-3 text-sm" key={feed.url}>
+          <div className="flex items-center gap-3 border border-border p-3 text-sm" key={feed.url}>
             <a
               href={feed.url}
               className="flex min-w-0 flex-1 items-center justify-between gap-3 hover:text-primary"
@@ -120,9 +120,9 @@ function SettingsPage() {
           </div>
         ))}
       </section>
-      <section className="flex items-center justify-between gap-4 rounded-xl border border-destructive/30 p-5">
+      <section className="flex items-center justify-between gap-4 border border-destructive p-5">
         <div>
-          <h2 className="font-medium">Delete calendar</h2>
+          <h2 className="catalog-eyebrow">Delete calendar</h2>
           <p className="text-sm text-muted-foreground">
             This permanently removes its courses and events.
           </p>

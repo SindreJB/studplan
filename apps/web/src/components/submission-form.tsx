@@ -140,7 +140,7 @@ export function SubmissionForm({
               id={field.name}
               name={field.name}
               disabled={submission != null}
-              className="h-8 w-full rounded-2xl border border-input bg-background px-3 text-sm disabled:opacity-60"
+              className="h-9 w-full border border-input bg-background px-3 text-sm disabled:opacity-60"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}

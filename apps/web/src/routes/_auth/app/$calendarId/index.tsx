@@ -60,21 +60,21 @@ function CoursesPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8">
-      <header>
-        <p className="text-sm text-muted-foreground">Semester {semester}</p>
-        <h1 className="text-2xl font-semibold">Courses</h1>
+      <header className="border-b border-border pb-5">
+        <p className="catalog-eyebrow">Semester {semester}</p>
+        <h1 className="catalog-display text-4xl">Courses</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Search the course catalog and add courses to this calendar.
         </p>
       </header>
-      <section className="rounded-xl border bg-card p-5">
-        <h2 className="mb-3 font-medium">Add a course</h2>
+      <section className="border border-border p-5">
+        <h2 className="catalog-eyebrow mb-3">Add a course</h2>
         <CoursePicker calendarId={calendarId} semester={semester} courses={courses} />
       </section>
       <section className="space-y-3">
-        <h2 className="font-medium">Added courses ({selected.length})</h2>
+        <h2 className="catalog-eyebrow">Added courses ({selected.length})</h2>
         {selected.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+          <div className="border border-dashed border-border p-10 text-center text-muted-foreground">
             <BookOpen className="mx-auto mb-3 size-8" />
             <p>No courses added yet.</p>
           </div>
@@ -86,13 +86,13 @@ function CoursesPage() {
             return (
               <article
                 key={`${course.id}-${course.term}`}
-                className="flex items-center gap-4 rounded-xl border bg-card p-4"
+                className="flex items-center gap-4 border border-border p-4"
               >
                 <input
                   type="color"
                   value={course.color}
                   aria-label={`Color for ${course.id}`}
-                  className="size-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
+                  className="size-9 shrink-0 cursor-pointer border border-border bg-transparent p-1"
                   onChange={(event) => {
                     updateColor.mutate({
                       calendarId,
@@ -104,7 +104,7 @@ function CoursesPage() {
                   }}
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium">{course.id}</h3>
+                  <h3 className="font-semibold tracking-tight">{course.id}</h3>
                   <p className="truncate text-sm text-muted-foreground">
                     {details?.nameEn ?? details?.name ?? details?.nameNb} · term {course.term}
                   </p>

@@ -35,7 +35,7 @@ function ForgotPasswordForm() {
   if (reset.isSuccess) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-xl font-bold">Check your email</h1>
+        <h1 className="catalog-display text-3xl">Check your email</h1>
         <p className="text-sm text-muted-foreground">
           If an account exists for that address, we sent a password reset link.
         </p>
@@ -55,7 +55,7 @@ function ForgotPasswordForm() {
       }}
     >
       <div>
-        <h1 className="text-xl font-bold">Reset your password</h1>
+        <h1 className="catalog-display text-3xl">Reset your password</h1>
         <p className="mt-1 text-sm text-muted-foreground">We will email you a reset link.</p>
       </div>
       <form.Field name="email">

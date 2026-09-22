@@ -6,7 +6,6 @@ import { toast } from "@repo/ui/components/toast";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CalendarDays } from "lucide-react";
 import { z } from "zod";
 
 import { FormError } from "#/components/form-error";
@@ -45,11 +44,9 @@ function SignupForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-2">
-        <Link to="/" aria-label="Studplan">
-          <CalendarDays className="size-6" />
-        </Link>
-        <h1 className="text-xl font-bold">Create your account</h1>
+      <div className="space-y-2">
+        <p className="catalog-eyebrow">Start a calendar</p>
+        <h1 className="catalog-display text-3xl">Create your account</h1>
       </div>
       <form
         className="space-y-4"
@@ -109,7 +106,7 @@ function SignupForm() {
           )}
         </form.Subscribe>
       </form>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link to="/login" className="underline underline-offset-4">
           Sign in
