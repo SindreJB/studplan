@@ -56,7 +56,7 @@ export function CatalogMenu({ links }: { links: readonly CatalogMenuLink[] }) {
         >
           {links.map((link) => (
             <Link
-              key={link.to}
+              key={link.label}
               to={link.to}
               role="menuitem"
               className="border-b border-border px-3.5 py-3 text-right text-sm font-bold whitespace-nowrap last:border-b-0 hover:bg-foreground hover:text-background"
