@@ -7,12 +7,15 @@
   "triggers": {
     "crons": ["0 3 * * *", "0 4 * * 1"],
   },
-  // No "routes" block: the Worker is served on your workers.dev subdomain.
-  // Once your domain's nameservers are live in Cloudflare, add it back as:
-  //
-  //   "routes": [{ "pattern": "studplan.example.com", "custom_domain": true }],
-  //
-  // and set APP_URL below to that same https:// address.
+  // Requires the studplan.no zone to be Active in Cloudflare — a deploy fails
+  // while it is still Pending. Comment this block out to fall back to the
+  // workers.dev subdomain, and set APP_URL below to match.
+  "routes": [
+    {
+      "pattern": "studplan.no",
+      "custom_domain": true,
+    },
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
@@ -24,9 +27,8 @@
   "vars": {
     // Better Auth's baseURL, and the hostname password-reset mail is sent from.
     // It must match the address the Worker is actually served on, or sign-in
-    // cookies and reset links break. The first `vp run deploy` prints the
-    // workers.dev URL — put it here and deploy again.
-    "APP_URL": "https://studplan.CHANGE-ME.workers.dev",
+    // cookies and reset links break.
+    "APP_URL": "https://studplan.no",
   },
   "secrets": {
     "required": ["BETTER_AUTH_SECRET"],
