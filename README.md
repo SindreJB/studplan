@@ -40,6 +40,14 @@ vp run deploy
 ```
 
 Deployment builds the app, applies remote D1 migrations, uploads `.env.prod` with
-`wrangler secret bulk`, deploys the Worker, and attaches `studplan.ahse.dev` as its
-Cloudflare-managed custom domain. `APP_URL` is the non-secret production variable in
-`wrangler.jsonc`.
+`wrangler secret bulk`, and deploys the Worker.
+
+The Worker is served on your `workers.dev` subdomain. The first deploy prints that
+URL; put it in `vars.APP_URL` in `wrangler.jsonc` and deploy again, or sign-in
+cookies and password-reset links will point at the wrong host.
+
+To serve it on your own domain instead, add the domain to Cloudflare, wait for its
+nameservers to go live, then uncomment the `routes` block in `wrangler.jsonc` with
+your hostname and set `APP_URL` to match. Password-reset mail goes out through the
+`EMAIL` binding, which needs Cloudflare Email Routing enabled on that domain — it
+does not work on a `workers.dev` address.

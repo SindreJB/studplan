@@ -7,12 +7,12 @@
   "triggers": {
     "crons": ["0 3 * * *", "0 4 * * 1"],
   },
-  "routes": [
-    {
-      "pattern": "studplan.ahse.dev",
-      "custom_domain": true,
-    },
-  ],
+  // No "routes" block: the Worker is served on your workers.dev subdomain.
+  // Once your domain's nameservers are live in Cloudflare, add it back as:
+  //
+  //   "routes": [{ "pattern": "studplan.example.com", "custom_domain": true }],
+  //
+  // and set APP_URL below to that same https:// address.
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
@@ -22,7 +22,11 @@
     },
   },
   "vars": {
-    "APP_URL": "https://studplan.ahse.dev",
+    // Better Auth's baseURL, and the hostname password-reset mail is sent from.
+    // It must match the address the Worker is actually served on, or sign-in
+    // cookies and reset links break. The first `vp run deploy` prints the
+    // workers.dev URL — put it here and deploy again.
+    "APP_URL": "https://studplan.CHANGE-ME.workers.dev",
   },
   "secrets": {
     "required": ["BETTER_AUTH_SECRET"],
